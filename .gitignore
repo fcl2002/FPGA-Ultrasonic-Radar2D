@@ -4,8 +4,6 @@ work/
 
 *.bak
 *.log
-incremental_db/
-db/
 
 #Eclipse Project files
 software/*.elf
@@ -21,3 +19,10 @@ software/_bps/obj/
 
 # Quartus Files
 DE10_Lite_Computer_YD
+db/
+incremental_db/
+output_files/
+simulation/
+*.v.bak
+*.bak
+*.rpt

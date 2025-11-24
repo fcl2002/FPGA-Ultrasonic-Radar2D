@@ -34,9 +34,9 @@ architecture Behavioral of Telemetre_IP_Standalone_TB is
     constant DIST_CM_TEST  : integer := 100;     -- Distance simulée = 100 cm
     -- Durée correspondante du signal ECHO :
     -- 1 cm ≈ 58 µs → 100 cm = 5800 µs = 5,8 ms
-    constant ECHO_TIME_150 : time := 8700 us;
-	 constant ECHO_TIME_100 : time := 5800 us;
-	 constant ECHO_TIME_50  : time := 2900 us;
+    constant ECHO_TIME_150 : time := 8700 us;    --150 cm
+	 constant ECHO_TIME_100 : time := 5800 us;    --100 cm
+	 constant ECHO_TIME_401  : time := 23258 us;  --401 cm
 
 begin
 
@@ -79,7 +79,7 @@ begin
         -- Attente d’un premier cycle TRIG généré par l’UUT
         wait for 3 ms;
 
-        -- 2) Première mesure : obstacle à 150 cm
+        -- Première mesure : obstacle à 150 cm
         echo_tb <= '1';
         wait for ECHO_TIME_150;
         echo_tb <= '0';
@@ -87,20 +87,18 @@ begin
         -- Attente pour laisser le temps au calcul de distance
         wait for 80 ms;
 		  
-		  -- 3) Deuxième mesure : obstacle à 100 cm
+		  -- 2ième mesure : obstacle à 100 cm
         echo_tb <= '1';
         wait for ECHO_TIME_100;
         echo_tb <= '0';
 
-        -- Attente pour laisser le temps au calcul de distance
         wait for 80 ms;
 		  
-		  -- 4) Troisième mesure : obstacle à 50 cm
+		  -- 3ième mesure : obstacle à 401 cm
         echo_tb <= '1';
-        wait for ECHO_TIME_50;
+        wait for ECHO_TIME_401;
         echo_tb <= '0';
 
-        -- Attente pour laisser le temps au calcul de distance
         wait for 20 ms;
 
         -- Fin de la simulation

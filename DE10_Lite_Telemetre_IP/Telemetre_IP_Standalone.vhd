@@ -3,21 +3,16 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 -- IP autonome pour le télémètre ultrasonique HC-SR04
--- Entrées :
---   clk   : horloge 50 MHz
---   rst_n : reset actif à l'état bas
---   echo  : signal de retour du capteur
--- Sorties :
---   trig    : impulsion de déclenchement (>= 10 µs)
---   dist_cm : distance mesurée en centimètres (0..1023)
-
 entity Telemetre_IP_Standalone is
     port (
-        clk      : in  std_logic;
-        rst_n    : in  std_logic;
-        echo     : in  std_logic;
-        trig     : out std_logic;
-        dist_cm  : out std_logic_vector(9 downto 0)
+		-- Entrées
+        clk      : in  std_logic; 	-- horloge 50 MHz
+        rst_n    : in  std_logic; 	-- reset actif à l'état bas
+        echo     : in  std_logic;	-- signal de retour du capteur
+		--Sorties 
+        trig     : out std_logic;   -- impulsion de déclenchement (>= 10 µs)
+        dist_cm  : out std_logic_vector(9 downto 0) -- distance mesurée en centimètres (0..1023)
+
     );
 end entity Telemetre_IP_Standalone;
 
@@ -39,6 +34,9 @@ architecture Behavioral of Telemetre_IP_Standalone is
     -- 1 µs = 50 cycles (à 50 MHz)
     -- Donc 1 cm ≈ 58 * 50 = 2900 cycles
     constant CYCLES_PER_CM         : integer := 2900;
+	 
+	 -- Distance maximale utile (en cm) au-delà de laquelle on considère
+	 constant MAX_DISTANCE_CM       : integer := 400;
 
     -- Machine d'états pour le contrôle de la mesure
     type state_type is (
@@ -149,8 +147,8 @@ begin
                         -- Saturation simple sur la plage du registre (0..1023)
                         if temp_distance_int < 0 then
                             temp_distance_int := 0;
-                        elsif temp_distance_int > 1023 then
-                            temp_distance_int := 1023;
+                        elsif temp_distance_int > MAX_DISTANCE_CM then
+                            temp_distance_int := 0;
                         end if;
 
                         distance_reg   <= to_unsigned(temp_distance_int, distance_reg'length);

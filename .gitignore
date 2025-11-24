@@ -1,0 +1,23 @@
+*.awf
+work/
+*.wlf
+
+*.bak
+*.log
+incremental_db/
+db/
+
+#Eclipse Project files
+software/*.elf
+software/*.map
+software/*.objdump
+software/*.o
+software/*.d
+
+#Eclipse BPS project files
+software/_bps/obj/
+
+*.zip
+
+# Quartus Files
+DE10_Lite_Computer_YD

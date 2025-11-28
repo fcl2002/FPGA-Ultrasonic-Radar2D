@@ -1,0 +1,87 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+-- IP télémètre avec interface Avalon-MM (lecture seule)
+-- Cette IP encapsule le module Telemetre_IP_Standalone et
+-- expose la distance en cm sur un registre lisible par le processeur NIOS II.
+
+entity Telemetre_us_Avalon is
+    port (
+        -- Horloge / reset
+        clk        : in  std_logic;
+        rst_n      : in  std_logic;
+
+        -- Interface Avalon-MM (esclave, lecture seule)
+        chipselect : in  std_logic;                        -- Sélection du périphérique
+        read_n     : in  std_logic;                        -- Lecture active à l'état bas
+        readdata   : out std_logic_vector(31 downto 0);    -- Données lues (distance en cm)
+
+        -- Interface vers le capteur ultrasonique HC-SR04
+        trig       : out std_logic;                        -- Sortie TRIG vers le capteur
+        echo       : in  std_logic;                        -- Entrée ECHO depuis le capteur
+
+        -- Sortie brute de la distance (optionnelle pour debug / LEDs)
+        dist_cm    : out std_logic_vector(9 downto 0)      -- Distance en cm (0..400)
+    );
+end entity Telemetre_us_Avalon;
+
+architecture Behavioral of Telemetre_us_Avalon is
+
+    -- Composant interne : IP autonome déjà développée
+    component Telemetre_IP_Standalone is
+        port (
+            clk      : in  std_logic;
+            rst_n    : in  std_logic;
+            echo     : in  std_logic;
+            trig     : out std_logic;
+            dist_cm  : out std_logic_vector(9 downto 0)
+        );
+    end component;
+
+    -- Registre interne pour mémoriser la distance (version entière)
+    signal dist_reg : std_logic_vector(9 downto 0);
+
+    -- Registre de sortie Avalon (optionnel, pour synchronisation)
+    signal readdata_reg : std_logic_vector(31 downto 0);
+
+begin
+
+    --------------------------------------------------------------------
+    -- Instanciation du télémètre autonome
+    --------------------------------------------------------------------
+    u_telemetre : Telemetre_IP_Standalone
+        port map (
+            clk     => clk,
+            rst_n   => rst_n,
+            echo    => echo,
+            trig    => trig,
+            dist_cm => dist_reg
+        );
+
+    -- Sortie brute de distance (pour debug, LEDs, etc.)
+    dist_cm <= dist_reg;
+
+    --------------------------------------------------------------------
+    -- Interface Avalon-MM lecture seule
+    -- Le processeur lit la distance actuelle en cm via readdata.
+    -- Protocole simple : pas de temps d’attente, lecture combinatoire.
+    --------------------------------------------------------------------
+    process(clk, rst_n)
+    begin
+        if rst_n = '0' then
+            readdata_reg <= (others => '0');
+        elsif rising_edge(clk) then
+            -- Lorsque le maître lit ce périphérique (chipselect = '1' et read_n = '0'),
+            -- on place la distance sur le bus readdata.
+            if (chipselect = '1') and (read_n = '0') then
+                -- Distance sur les 10 bits de poids faible, le reste à 0
+                readdata_reg(9 downto 0)   <= dist_reg;
+                readdata_reg(31 downto 10) <= (others => '0');
+            end if;
+        end if;
+    end process;
+
+    readdata <= readdata_reg;
+
+end architecture Behavioral;

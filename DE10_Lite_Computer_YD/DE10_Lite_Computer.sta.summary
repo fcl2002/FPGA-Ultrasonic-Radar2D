@@ -1,0 +1,221 @@
+------------------------------------------------------------
+Timing Analyzer Summary
+------------------------------------------------------------
+
+Type  : Slow 1200mV 85C Model Setup 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : -32.016
+TNS   : -2394.940
+
+Type  : Slow 1200mV 85C Model Setup 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 34.055
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Setup 'altera_reserved_tck'
+Slack : 43.032
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 0.219
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'altera_reserved_tck'
+Slack : 0.324
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Hold 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 0.341
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Recovery 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 4.189
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Recovery 'altera_reserved_tck'
+Slack : 47.667
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Removal 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 0.955
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Removal 'altera_reserved_tck'
+Slack : 1.141
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 4.621
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 4.853
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'DRAM_CLK'
+Slack : 5.790
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'CLOCK_50'
+Slack : 9.802
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'CLOCK2_50'
+Slack : 9.831
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 19.713
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'altera_reserved_tck'
+Slack : 49.629
+TNS   : 0.000
+
+Type  : Slow 1200mV 85C Model Minimum Pulse Width 'CLOCK_ADC_10'
+Slack : 96.000
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Setup 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : -28.127
+TNS   : -1518.299
+
+Type  : Slow 1200mV 0C Model Setup 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 34.533
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Setup 'altera_reserved_tck'
+Slack : 43.536
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 0.215
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'altera_reserved_tck'
+Slack : 0.291
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Hold 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 0.307
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Recovery 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 4.659
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Recovery 'altera_reserved_tck'
+Slack : 47.894
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Removal 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 0.877
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Removal 'altera_reserved_tck'
+Slack : 1.035
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 4.635
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 4.876
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'DRAM_CLK'
+Slack : 5.790
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'CLOCK_50'
+Slack : 9.736
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'CLOCK2_50'
+Slack : 9.770
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 19.704
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'altera_reserved_tck'
+Slack : 49.654
+TNS   : 0.000
+
+Type  : Slow 1200mV 0C Model Minimum Pulse Width 'CLOCK_ADC_10'
+Slack : 96.000
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Setup 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : -7.302
+TNS   : -30.640
+
+Type  : Fast 1200mV 0C Model Setup 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 37.402
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Setup 'altera_reserved_tck'
+Slack : 47.192
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 0.072
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'altera_reserved_tck'
+Slack : 0.141
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Hold 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 0.148
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Recovery 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 7.060
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Recovery 'altera_reserved_tck'
+Slack : 49.165
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Removal 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 0.414
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Removal 'altera_reserved_tck'
+Slack : 0.482
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'DRAM_CLK'
+Slack : 2.000
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 2.000
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'The_System|system_pll|sys_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[0]'
+Slack : 4.710
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'CLOCK_50'
+Slack : 9.524
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'CLOCK2_50'
+Slack : 9.528
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'The_System|video_pll|video_pll|PLL_for_DE_Series_Boards|auto_generated|pll1|clk[1]'
+Slack : 19.730
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'altera_reserved_tck'
+Slack : 49.410
+TNS   : 0.000
+
+Type  : Fast 1200mV 0C Model Minimum Pulse Width 'CLOCK_ADC_10'
+Slack : 96.000
+TNS   : 0.000
+
+------------------------------------------------------------

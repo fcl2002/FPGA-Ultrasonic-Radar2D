@@ -1,0 +1,6 @@
+vlib work
+vcom Telemetre_IP_Standalone.vhd
+vcom tb_Telemetre_IP_Standalone.vhd
+vsim tb_Telemetre_IP_Standalone
+add wave *
+run 50 ms

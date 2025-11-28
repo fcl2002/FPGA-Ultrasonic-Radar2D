@@ -13,23 +13,6 @@ db/
 incremental_db/
 output_files/
 simulation/
-Computer_System/
-*.v.bak
-*.bak
-*.rpt
-*.amp
-*.jdi
-*.pin
-*.pof
-*.sdc
-*.sld
-*.sof
-*.nlv
-*.tcl
-*.xml
-*.done
-*.smsg
-*.summary
 
 *.awf
 work/

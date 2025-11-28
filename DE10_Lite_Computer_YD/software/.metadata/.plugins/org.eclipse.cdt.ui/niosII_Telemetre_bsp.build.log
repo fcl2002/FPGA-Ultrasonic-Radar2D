@@ -1,0 +1,6 @@
+09:20:17 **** Clean-only build of configuration Nios II for project niosII_Telemetre_bsp ****
+make clean 
+[BSP clean complete]
+
+09:20:18 Build Finished (took 1s.353ms)
+

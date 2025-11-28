@@ -1,10 +1,3 @@
-*.awf
-work/
-*.wlf
-
-*.bak
-*.log
-
 #Eclipse Project files
 software/*.elf
 software/*.map
@@ -15,15 +8,11 @@ software/*.d
 #Eclipse BPS project files
 software/_bps/obj/
 
-*.zip
-
 # Quartus Files
-
 db/
 incremental_db/
 output_files/
 simulation/
-software/
 Computer_System/
 *.v.bak
 *.bak
@@ -41,3 +30,8 @@ Computer_System/
 *.done
 *.smsg
 *.summary
+
+*.awf
+work/
+*.wlf
+*.zip

@@ -1,0 +1,4 @@
+eclipse.preferences.version=1
+newSoftwareExampleWizardPage.defaultLocation=C\:\\Architecture_des_systemes_embarques\\TP\\TP1\\tp_train\\FPGA-Ultrasonic-Radar2D\\DE10_Lite_Computer_YD\\software\\niosII_Telemetre
+newSoftwareExampleWizardPage.sopcinfoFile=C\:\\Architecture_des_systemes_embarques\\TP\\TP1\\tp_train\\FPGA-Ultrasonic-Radar2D\\DE10_Lite_Computer_YD\\Computer_System.sopcinfo
+newSoftwareExampleWizardPage2.newBspLocation=C\:\\Architecture_des_systemes_embarques\\TP\\TP1\\tp_train\\FPGA-Ultrasonic-Radar2D\\DE10_Lite_Computer_YD\\software\\niosII_Telemetre_bsp

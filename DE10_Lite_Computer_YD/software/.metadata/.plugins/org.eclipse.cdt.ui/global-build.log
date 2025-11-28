@@ -1,18 +1,10 @@
-11:06:21 **** Incremental Build of configuration Nios II for project niosII_Telemetre ****
+11:26:24 **** Incremental Build of configuration Nios II for project niosII_Telemetre ****
 make all 
 Info: Building ../niosII_Telemetre_bsp/
 C:/intelFPGA_lite/18.1/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../niosII_Telemetre_bsp/
 [BSP build complete]
 Info: Compiling telemetre_us_avalon.c to obj/default/telemetre_us_avalon.o
 nios2-elf-gcc -xc -MP -MMD -c -I../niosII_Telemetre_bsp//HAL/inc -I../niosII_Telemetre_bsp/ -I../niosII_Telemetre_bsp//drivers/inc  -pipe -D__hal__ -DALT_NO_INSTRUCTION_EMULATION -DALT_SINGLE_THREADED    -O0 -g -Wall   -mno-hw-div -mcustom-fpu-cfg=60-2 -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o obj/default/telemetre_us_avalon.o telemetre_us_avalon.c
-telemetre_us_avalon.c: In function 'main':
-telemetre_us_avalon.c:27:16: warning: too many arguments for format [-Wformat-extra-args]
-         printf("Dist : %d cm \n", dist_hardware, raw_cycles);
-                ^
-telemetre_us_avalon.c:27:16: warning: too many arguments for format [-Wformat-extra-args]
-telemetre_us_avalon.c:23:15: warning: unused variable 'dist_precisa' [-Wunused-variable]
-         float dist_precisa = (float)raw_cycles * 0.00034;
-               ^
 Info: Linking niosII_Telemetre.elf
 nios2-elf-g++  -T'../niosII_Telemetre_bsp//linker.x' -msys-crt0='../niosII_Telemetre_bsp//obj/HAL/src/crt0.o' -msys-lib=hal_bsp -L../niosII_Telemetre_bsp/  -mcustom-fpu-cfg=60-2  -Wl,-Map=niosII_Telemetre.map   -O0 -g -Wall   -mno-hw-div -mcustom-fpu-cfg=60-2 -mno-hw-mul -mno-hw-mulx -mgpopt=global  -o niosII_Telemetre.elf obj/default/telemetre_us_avalon.o -lm -msys-lib=m
 nios2-elf-insert niosII_Telemetre.elf --thread_model hal --cpu_name Nios2 --qsys true --simulation_enabled false --id 0 --sidp 0xff202040 --timestamp 1764320573 --stderr_dev JTAG_UART --stdin_dev JTAG_UART --stdout_dev JTAG_UART --sopc_system_name Computer_System --quartus_project_dir "C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD" --jdi C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/software/niosII_Telemetre_bsp/../../DE10_Lite_Computer.jdi --sopcinfo C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/software/niosII_Telemetre_bsp/../../Computer_System.sopcinfo
@@ -20,4 +12,16 @@ Info: (niosII_Telemetre.elf) 72 KBytes program size (code + initialized data).
 Info:                        65456 KBytes free for stack + heap.
 Info: Creating niosII_Telemetre.objdump
 nios2-elf-objdump --disassemble --syms --all-header --source niosII_Telemetre.elf >niosII_Telemetre.objdump
+[niosII_Telemetre build complete]
+11:26:30 **** Build of configuration Nios II for project niosII_Telemetre ****
+make all 
+Info: Building ../niosII_Telemetre_bsp/
+C:/intelFPGA_lite/18.1/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../niosII_Telemetre_bsp/
+[BSP build complete]
+[niosII_Telemetre build complete]
+11:26:30 **** Incremental Build of configuration Nios II for project niosII_Telemetre ****
+make all 
+Info: Building ../niosII_Telemetre_bsp/
+C:/intelFPGA_lite/18.1/nios2eds/bin/gnu/H-x86_64-mingw32/bin/make --no-print-directory -C ../niosII_Telemetre_bsp/
+[BSP build complete]
 [niosII_Telemetre build complete]

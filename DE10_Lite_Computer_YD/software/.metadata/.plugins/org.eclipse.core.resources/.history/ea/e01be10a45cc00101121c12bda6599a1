@@ -83,7 +83,7 @@ int main()
         dist_hardware = dist_hardware / 2;
 
         // Exibe no console
-        printf("Dist : %d cm \n", dist_hardware);
+        printf("Dist : %d cm  (raw:%d)\n", dist_hardware, raw_cycles);
 
         // Exibe no display de 7 segmentos
         write_sevenseg(dist_hardware);

@@ -49,16 +49,18 @@ int main()
         alt_u32 data = IORD(TELEMETRE_US_AVALON_0_BASE, 0);
 
         // Bits 0�9: hardware-calculated distance
-        int dist_hardware = data & 0x3FF;
+        int dist_hardware = data & 0x3FF;   // primeiros 10 bits
+        int raw_cycles    = data >> 10;     // debug opcional
 
-        // Bits 10�31: raw cycle counter (debug, unused here)
-        int raw_cycles    = data >> 10;
-
-        // Compensation due to 50 MHz clock (distance doubled)
+        // Correção necessária (50 MHz → dobra a distância)
         dist_hardware = dist_hardware / 2;
 
+        // Exibe no console
         printf("Dist : %d cm \n", dist_hardware);
+
+        // Exibe no display de 7 segmentos
         write_sevenseg(dist_hardware);
+
         usleep(200000); // 200 ms
     }
 

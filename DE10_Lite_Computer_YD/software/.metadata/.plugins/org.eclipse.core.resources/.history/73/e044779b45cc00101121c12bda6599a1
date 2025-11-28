@@ -19,7 +19,7 @@ static const unsigned char SEG_MAP[10] =
     0x6F  // 9
 };
 
-// Write a 4-digit value to HEX3�HEX0
+// Função para escrever nos 4 displays
 void write_sevenseg(int dist)
 {
     if (dist < 0) dist = 0;
@@ -41,24 +41,25 @@ void write_sevenseg(int dist)
 
 int main()
 {
-	alt_putstr("=== Ultrasonic Radar - HEX Display Test ===\n");
+    alt_putstr("=== Radar Ultrassonico - Teste 7 Segmentos ===\n");
 
     while (1)
     {
-        // Read the 32-bit register from the Avalon IP
+
         alt_u32 data = IORD(TELEMETRE_US_AVALON_0_BASE, 0);
 
-        // Bits 0�9: hardware-calculated distance
-        int dist_hardware = data & 0x3FF;
+        int dist_hardware = data & 0x3FF;   // primeiros 10 bits
+        int raw_cycles    = data >> 10;     // debug opcional
 
-        // Bits 10�31: raw cycle counter (debug, unused here)
-        int raw_cycles    = data >> 10;
-
-        // Compensation due to 50 MHz clock (distance doubled)
+        // Correção necessária (50 MHz → dobra a distância)
         dist_hardware = dist_hardware / 2;
 
+        // Exibe no console
         printf("Dist : %d cm \n", dist_hardware);
+
+        // Exibe no display de 7 segmentos
         write_sevenseg(dist_hardware);
+
         usleep(200000); // 200 ms
     }
 

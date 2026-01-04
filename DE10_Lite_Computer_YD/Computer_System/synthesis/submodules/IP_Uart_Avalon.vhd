@@ -2,142 +2,214 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity IP_Uart_Avalon is
-    port (
-        -- Global
-        clk        : in  std_logic;
-        reset_n    : in  std_logic;
-        
-        -- Avalon-MM Slave
-        chipselect : in  std_logic;
-        write_n    : in  std_logic; -- '0' = Escrita
-        writedata  : in  std_logic_vector(31 downto 0);
-        read_n     : in  std_logic; -- '0' = Leitura
-        readdata   : out std_logic_vector(31 downto 0);
-
-        -- Interface Externa (Pinos Físicos)
-        uart_rx    : in  std_logic; -- Recebe do mundo
-        uart_tx    : out std_logic  -- Manda pro mundo
+entity IP_UART_Avalon is
+    generic (
+        -- For 50 MHz and 115200 baud (1x sampling): 50e6 / 115200 ≈ 434
+        G_DIV_FACTOR : integer := 434
     );
-end entity IP_Uart_Avalon;
+    port
+    (
+        clk           : in  std_logic;
+        reset_n       : in  std_logic;
 
-architecture Behavioral of IP_Uart_Avalon is
+        -- Avalon-MM slave (no address port, active-low control signals)
+        chipselect_n  : in  std_logic;
+        read_n        : in  std_logic;
+        readdata      : out std_logic_vector(31 downto 0);
+        write_n       : in  std_logic;
+        writedata     : in  std_logic_vector(31 downto 0);
 
-    -- CONFIGURAÇÃO DE VELOCIDADE
-    constant CLK_FREQ  : integer := 100000000; -- Mude para 100000000 se usar 100MHz
-    constant BAUD_RATE : integer := 115200;
-    constant BIT_TIMER : integer := CLK_FREQ / BAUD_RATE;
+        -- Conduit
+        uart_tx       : out std_logic;
+        uart_rx       : in  std_logic
+    );
+end entity;
 
-    -- Sinais TX
-    type tx_state_type is (IDLE, START, DATA, STOP);
-    signal tx_state : tx_state_type := IDLE;
-    signal tx_timer : integer range 0 to BIT_TIMER;
-    signal tx_bit_idx : integer range 0 to 7;
-    signal tx_data_buf : std_logic_vector(7 downto 0);
-    signal tx_busy     : std_logic := '0';
+architecture Behavioral of IP_UART_Avalon is
 
-    -- Sinais RX
-    type rx_state_type is (IDLE, START, DATA, STOP);
-    signal rx_state : rx_state_type := IDLE;
-    signal rx_timer : integer range 0 to BIT_TIMER;
-    signal rx_bit_idx : integer range 0 to 7;
-    signal rx_data_buf : std_logic_vector(7 downto 0);
-    signal rx_ready    : std_logic := '0'; -- Indica que chegou dado novo
+    -- RX state machine
+    type StateType_RX is (Wait_data, Load_data, Wait_end, Save_byte);
+    signal State_Rx      : StateType_RX := Wait_data;
+    signal bit_Rx        : integer range 0 to 9 := 0;
+    signal byte_Rx       : std_logic_vector(7 downto 0) := (others => '0');
+    signal byte_Rx_out   : std_logic_vector(7 downto 0) := (others => '0');
+
+    -- TX state machine
+    type StateType_TX is (Idle, Wait_Release, Load_reg, Send_start, Send_byte, Send_stop);
+    signal State_Tx      : StateType_TX := Idle;
+    signal bit_Tx        : integer range 0 to 9 := 0;
+    signal byte_Tx       : std_logic_vector(7 downto 0) := (others => '0');
+
+    signal frame_shift   : std_logic_vector(9 downto 0) := (others => '1'); -- start+data+stop
+    signal load_r        : std_logic := '0';
+
+    -- "Pseudo-address" encoded in writedata[31:30]
+    signal Address       : std_logic_vector(1 downto 0) := (others => '0');
+
+    -- Tick generator (1 tick per bit)
+    signal counter       : integer := 0;
+    signal Tick          : std_logic := '0';
 
 begin
 
-    -- =========================================================
-    -- PROCESSO 1: INTERFACE AVALON (Leitura e Escrita do Nios)
-    -- =========================================================
-    process(clk, reset_n)
+    -- Tick generator: Tick pulses once every G_DIV_FACTOR clock cycles
+    process (clk, reset_n)
     begin
         if reset_n = '0' then
+            counter <= 0;
+            Tick <= '0';
+        elsif rising_edge(clk) then
+            if counter = G_DIV_FACTOR - 1 then
+                counter <= 0;
+                Tick <= '1';
+            else
+                counter <= counter + 1;
+                Tick <= '0';
+            end if;
+        end if;
+    end process;
+
+    -- Avalon read/write handling (same philosophy as your friend's code)
+    process (clk, reset_n)
+    begin
+        if reset_n = '0' then
+            byte_Tx   <= (others => '0');
+            load_r    <= '0';
+            Address   <= (others => '0');
+            readdata  <= (others => '0');
+        elsif rising_edge(clk) then
+
+            -- Default read data
             readdata <= (others => '0');
-            tx_data_buf <= (others => '0');
-            tx_busy <= '0';
-        elsif rising_edge(clk) then
-            -- ESCRITA (Nios manda enviar)
-            -- Se escrevermos algo, iniciamos o TX (bit busy liga)
-            if chipselect = '1' and write_n = '0' then
-                tx_data_buf <= writedata(7 downto 0);
-                tx_busy <= '1'; -- Flag para iniciar envio
-            elsif tx_state = STOP and tx_timer = BIT_TIMER-1 then
-                tx_busy <= '0'; -- Terminou de enviar
-            end if;
 
-            -- LEITURA (Nios quer ver status ou dado recebido)
-            if chipselect = '1' and read_n = '0' then
-                -- Bit 9 = RX Ready? 
-                -- Bit 8 = TX Busy?
-                -- Bits 7-0 = Dado Recebido
-                readdata(31 downto 10) <= (others => '0');
-                readdata(9) <= rx_ready;
-                readdata(8) <= tx_busy; 
-                readdata(7 downto 0) <= rx_data_buf;
-                
-                -- Se o Nios leu, limpamos a flag de RX Ready
-                if rx_ready = '1' then
-                   -- (Lógica simplificada: assume que leu e limpou)
-                   -- Na prática precisaria de um handshake melhor, mas pra aula serve.
-                end if;
+            -- Latch the "pseudo-address" from writedata MSBs (as in your friend's design)
+            Address <= writedata(31 downto 30);
+
+            -- Write transaction (active-low signals)
+            if chipselect_n = '0' and write_n = '0' then
+                case Address is
+                    when "00" =>  -- LOAD register (bit0)
+                        load_r <= writedata(0);
+
+                    when "01" =>  -- TX byte register
+                        byte_Tx <= writedata(7 downto 0);
+
+                    when others =>
+                        null;
+                end case;
+
+            -- Read transaction (active-low signals)
+            elsif chipselect_n = '0' and read_n = '0' then
+                case Address is
+                    when "10" =>  -- RX byte register
+                        readdata(7 downto 0) <= byte_Rx_out;
+
+                    when others =>
+                        readdata <= (others => '0');
+                end case;
             end if;
         end if;
     end process;
 
-    -- =========================================================
-    -- PROCESSO 2: MÁQUINA DE ESTADOS TX (Envio Serial)
-    -- =========================================================
-    process(clk, reset_n)
+    -- UART TX/RX FSMs driven by Tick (prioritize TX when active)
+    process (clk, reset_n)
     begin
         if reset_n = '0' then
-            uart_tx <= '1'; -- Linha em repouso é HIGH
-            tx_state <= IDLE;
-            tx_timer <= 0;
+            -- RX reset
+            State_Rx <= Wait_data;
+            bit_Rx <= 0;
+            byte_Rx <= (others => '0');
+            byte_Rx_out <= (others => '0');
+
+            -- TX reset
+            State_Tx <= Idle;
+            uart_tx <= '1';
+            bit_Tx <= 0;
+            frame_shift <= (others => '1');
+
         elsif rising_edge(clk) then
-            case tx_state is
-                when IDLE =>
-                    uart_tx <= '1';
-                    tx_timer <= 0;
-                    if tx_busy = '1' then
-                        tx_state <= START;
-                    end if;
-                
-                when START =>
-                    uart_tx <= '0'; -- Start Bit (Low)
-                    if tx_timer < BIT_TIMER-1 then
-                        tx_timer <= tx_timer + 1;
-                    else
-                        tx_timer <= 0;
-                        tx_bit_idx <= 0;
-                        tx_state <= DATA;
-                    end if;
+            if Tick = '1' then
 
-                when DATA =>
-                    uart_tx <= tx_data_buf(tx_bit_idx);
-                    if tx_timer < BIT_TIMER-1 then
-                        tx_timer <= tx_timer + 1;
-                    else
-                        tx_timer <= 0;
-                        if tx_bit_idx < 7 then
-                            tx_bit_idx <= tx_bit_idx + 1;
-                        else
-                            tx_state <= STOP;
-                        end if;
-                    end if;
+                -- TX has priority
+                if load_r = '1' or State_Tx /= Idle then
+                    case State_Tx is
 
-                when STOP =>
-                    uart_tx <= '1'; -- Stop Bit (High)
-                    if tx_timer < BIT_TIMER-1 then
-                        tx_timer <= tx_timer + 1;
-                    else
-                        tx_state <= IDLE; -- Fim
-                    end if;
-            end case;
+                        when Idle =>
+                            if load_r = '1' then
+                                State_Tx <= Load_reg;
+                            end if;
+                            -- Reset RX when TX starts (same behavior as friend's code)
+                            State_Rx <= Wait_data;
+
+                        when Load_reg =>
+                            -- Build frame: start(0) + data(LSB first) + stop(1)
+                            frame_shift <= '1' & byte_Tx & '0';
+                            bit_Tx <= 0;
+                            State_Tx <= Send_start;
+
+                        when Send_start =>
+                            uart_tx <= frame_shift(bit_Tx);
+                            bit_Tx <= bit_Tx + 1;
+                            State_Tx <= Send_byte;
+
+                        when Send_byte =>
+                            uart_tx <= frame_shift(bit_Tx);
+                            if bit_Tx = 8 then
+                                State_Tx <= Send_stop;
+                            else
+                                bit_Tx <= bit_Tx + 1;
+                            end if;
+
+                        when Send_stop =>
+                            uart_tx <= '1';
+                            State_Tx <= Wait_Release;
+
+                        when Wait_Release =>
+                            if load_r = '0' then
+                                State_Tx <= Idle;
+                            end if;
+
+                        when others =>
+                            State_Tx <= Idle;
+
+                    end case;
+
+                -- RX (only when TX is idle)
+                else
+                    case State_Rx is
+
+                        when Wait_data =>
+                            if uart_rx = '0' then
+                                State_Rx <= Load_data;
+                                bit_Rx <= 0;
+                            end if;
+
+                        when Load_data =>
+                            if bit_Rx = 8 then
+                                State_Rx <= Wait_end;
+                            else
+                                byte_Rx(bit_Rx) <= uart_rx;
+                                bit_Rx <= bit_Rx + 1;
+                            end if;
+
+                        when Wait_end =>
+                            if uart_rx = '1' then
+                                State_Rx <= Save_byte;
+                                byte_Rx_out <= byte_Rx;
+                                byte_Rx <= (others => '0');
+                            end if;
+
+                        when Save_byte =>
+                            State_Rx <= Wait_data;
+
+                        when others =>
+                            State_Rx <= Wait_data;
+
+                    end case;
+                end if;
+
+            end if;
         end if;
     end process;
-
-    -- (Opcional) PROCESSO RX: Para receber dados, implementaremos depois se precisar.
-    -- Por enquanto vamos focar em MANDAR dados pro PC (Radar -> Tela).
-    rx_ready <= '0'; 
 
 end architecture;

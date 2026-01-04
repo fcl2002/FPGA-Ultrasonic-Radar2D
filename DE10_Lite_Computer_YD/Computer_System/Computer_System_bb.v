@@ -32,9 +32,7 @@ module Computer_System (
 	vga_G,
 	vga_B,
 	video_pll_ref_clk_clk,
-	video_pll_ref_reset_reset,
-	uart_external_beginbursttransfer,
-	uart_external_writeresponsevalid_n);	
+	video_pll_ref_reset_reset);	
 
 	inout	[15:0]	arduino_gpio_export;
 	output		arduino_reset_n_export;
@@ -69,6 +67,4 @@ module Computer_System (
 	output	[3:0]	vga_B;
 	input		video_pll_ref_clk_clk;
 	input		video_pll_ref_reset_reset;
-	input		uart_external_beginbursttransfer;
-	output		uart_external_writeresponsevalid_n;
 endmodule

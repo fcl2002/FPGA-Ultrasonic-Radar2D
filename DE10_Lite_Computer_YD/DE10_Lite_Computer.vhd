@@ -184,8 +184,8 @@ begin
 
             -- 3. UART (Serial para o PC)
             -- Conectamos nos primeiros pinos do Arduino Header
-            uart_external_uart_rx          => ARDUINO_IO(0), -- RX (Recebe)
-            uart_external_uart_tx          => ARDUINO_IO(1)  -- TX (Envia)
+            uart_external_uart_rx          => GPIO(13), -- RX (Recebe)
+            uart_external_uart_tx          => GPIO(12)  -- TX (Envia)
         );
 
 end architecture;

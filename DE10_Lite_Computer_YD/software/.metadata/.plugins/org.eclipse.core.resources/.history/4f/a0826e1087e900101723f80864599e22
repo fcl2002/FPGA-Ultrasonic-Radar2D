@@ -1,0 +1,105 @@
+#include <stdint.h>
+#include <unistd.h>
+#include "system.h"
+#include "io.h"
+
+/* ==========================
+   Custom UART (friend-style)
+   - Single 32-bit Avalon register (SPAN=4 => only offset 0x0)
+   - Mode encoded in bits [31:30]
+   ========================== */
+
+#define UART_BASE        IP_UART_AVALON_0_BASE
+
+/* Keep the same mode definitions your friend used */
+#define LOAD_MODE        (0x01u << 30)  /* used to trigger TX with payload[7:0] */
+#define TX_MODE          (0x00u << 30)  /* used to clear/deassert */
+#define RX_MODE          (0x02u << 30)  /* used to select RX before reading */
+
+#define ASCII_MASK       0xFFu
+#define CR               0x0Du
+#define LF               0x0Au
+
+static inline void uart_write(uint32_t w)
+{
+    IOWR_32DIRECT(UART_BASE, 0x0, w);
+}
+
+static inline uint32_t uart_read(void)
+{
+    return IORD_32DIRECT(UART_BASE, 0x0);
+}
+
+/* Send one byte (same philosophy as your friend's send_ascii, but offset 0x0 only) */
+static void uart_send_byte(uint8_t c, int delay_us)
+{
+    uart_write(LOAD_MODE | (c & ASCII_MASK));
+    usleep(delay_us);
+    uart_write(TX_MODE); /* deassert/clear */
+    usleep(delay_us);
+}
+
+/* Send a null-terminated string */
+static void uart_send_string(const char *s)
+{
+    while (*s) {
+        uart_send_byte((uint8_t)*s++, 1000);
+    }
+}
+
+/* Read last received byte (no rx_ready flag in this IP) */
+static uint8_t uart_read_byte_raw(void)
+{
+    /* "Select RX" then read from the same register (offset 0x0) */
+    uart_write(RX_MODE);
+    usleep(200); /* small settle time */
+    return (uint8_t)(uart_read() & 0xFFu);
+}
+
+/* Blocking getc using change-detection (limitation: repeated same char may be missed) */
+static uint8_t uart_getc_blocking(void)
+{
+    static uint8_t last = 0;
+    uint8_t cur;
+
+    do {
+        cur = uart_read_byte_raw();
+    } while (cur == last);
+
+    last = cur;
+    return cur;
+}
+
+int main(void)
+{
+    /* IMPORTANT:
+       printf() goes to JTAG UART by default (ALT_STDOUT = /dev/JTAG_UART),
+       not to your external UART terminal.
+       So we must use uart_send_* to see text in VS Code terminal.
+     */
+
+    uart_send_string("\r\n=== Custom UART OK (115200 8N1) ===\r\n");
+    uart_send_string("Type something and FPGA will echo it.\r\n");
+    uart_send_string("Commands: h=help, p=ping\r\n\r\n");
+
+    while (1) {
+        uint8_t c = uart_getc_blocking();
+
+        if (c == 'h' || c == 'H') {
+            uart_send_string("\r\nHelp:\r\n");
+            uart_send_string("  p : ping\r\n");
+            uart_send_string("  h : help\r\n");
+            uart_send_string("  other keys are echoed\r\n\r\n");
+        } else if (c == 'p' || c == 'P') {
+            uart_send_string("\r\nPONG\r\n");
+        } else if (c == '\r') {
+            uart_send_byte(CR, 1000);
+            uart_send_byte(LF, 1000);
+        } else {
+            /* Echo back */
+            uart_send_byte(c, 1000);
+        }
+    }
+
+    return 0;
+}

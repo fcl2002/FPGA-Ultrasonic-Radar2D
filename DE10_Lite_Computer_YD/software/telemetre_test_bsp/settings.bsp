@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Jan 4, 2026 11:43:08 AM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1767523388184</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>Jan 4, 2026 4:10:43 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1767539443476</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>C:\Architecture_des_systemes_embarques\TP\TP1\tp_train\FPGA-Ultrasonic-Radar2D\DE10_Lite_Computer_YD\software\telemetre_test_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>..\..\Computer_System.sopcinfo</SopcDesignFile>
@@ -911,7 +911,7 @@
                 <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>Uart_0</slaveDescriptor>
+                <slaveDescriptor>IP_UART_Avalon_0</slaveDescriptor>
                 <addressRange>0x04000004 - 0x04000007</addressRange>
                 <addressSpan>4</addressSpan>
                 <attributes/>

@@ -5,13 +5,13 @@ preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Onchip_SRAM -pg 1
 preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_RGB_Resampler -pg 1
 preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.ASCII_to_Image -pg 1
 preplace inst Computer_System.Nios2.clock_bridge -pg 1
-preplace inst Computer_System.JTAG_UART -pg 1 -lvl 4 -y 1310
+preplace inst Computer_System.JTAG_UART -pg 1 -lvl 4 -y 1410
 preplace inst Computer_System -pg 1 -lvl 1 -y 40 -regy -20
 preplace inst Computer_System.VGA_Subsystem.VGA_Pixel_Scaler -pg 1
 preplace inst Computer_System.VGA_Subsystem.VGA_Pixel_DMA -pg 1
-preplace inst Computer_System.Slider_Switches -pg 1 -lvl 4 -y 730
-preplace inst Computer_System.SDRAM -pg 1 -lvl 4 -y 630
-preplace inst Computer_System.Pushbuttons -pg 1 -lvl 4 -y 950
+preplace inst Computer_System.Slider_Switches -pg 1 -lvl 4 -y 830
+preplace inst Computer_System.SDRAM -pg 1 -lvl 4 -y 730
+preplace inst Computer_System.Pushbuttons -pg 1 -lvl 4 -y 1050
 preplace inst Computer_System.LEDs -pg 1 -lvl 4 -y 530
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.p2b -pg 1
 preplace inst Computer_System.Arduino_Reset_N -pg 1 -lvl 4 -y 30
@@ -20,21 +20,21 @@ preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem -pg 1
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.transacto -pg 1
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.clk_src -pg 1
 preplace inst Computer_System.IP_Servo_Avalon_0 -pg 1 -lvl 4 -y 330
-preplace inst Computer_System.Arduino_GPIO -pg 1 -lvl 4 -y 830
+preplace inst Computer_System.Arduino_GPIO -pg 1 -lvl 4 -y 930
 preplace inst Computer_System.Video_PLL.reset_from_locked -pg 1
-preplace inst Computer_System.Nios2_Floating_Point -pg 1 -lvl 4 -y 1270
-preplace inst Computer_System.Nios2 -pg 1 -lvl 3 -y 1270
+preplace inst Computer_System.Nios2_Floating_Point -pg 1 -lvl 4 -y 1370
+preplace inst Computer_System.Nios2 -pg 1 -lvl 3 -y 1370
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.jtag_phy_embedded_in_jtag_master -pg 1
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.clk_rst -pg 1
 preplace inst Computer_System.VGA_Subsystem.VGA_Pixel_RGB_Resampler -pg 1
-preplace inst Computer_System.JTAG_to_FPGA_Bridge -pg 1 -lvl 2 -y 1320
+preplace inst Computer_System.JTAG_to_FPGA_Bridge -pg 1 -lvl 2 -y 1380
 preplace inst Computer_System.HEX3_HEX0 -pg 1 -lvl 4 -y 130
 preplace inst Computer_System.VGA_Subsystem.VGA_Dual_Clock_FIFO -pg 1
 preplace inst Computer_System.VGA_Subsystem.VGA_Clk -pg 1
 preplace inst Computer_System.VGA_Subsystem.Sys_Clk -pg 1
 preplace inst Computer_System.System_PLL -pg 1 -lvl 1 -y 1570
-preplace inst Computer_System.Interval_Timer -pg 1 -lvl 4 -y 1070
-preplace inst Computer_System.VGA_Subsystem -pg 1 -lvl 2 -y 1020
+preplace inst Computer_System.Interval_Timer -pg 1 -lvl 4 -y 1170
+preplace inst Computer_System.VGA_Subsystem -pg 1 -lvl 2 -y 1120
 preplace inst Computer_System.System_PLL.sys_pll -pg 1
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.fifo -pg 1
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.timing_adt -pg 1
@@ -42,42 +42,44 @@ preplace inst Computer_System.HEX5_HEX4 -pg 1 -lvl 4 -y 230
 preplace inst Computer_System.VGA_Subsystem.VGA_Pixel_FIFO -pg 1
 preplace inst Computer_System.Telemetre_us_Avalon_0 -pg 1 -lvl 4 -y 430
 preplace inst Computer_System.System_PLL.reset_from_locked -pg 1
-preplace inst Computer_System.SysID -pg 1 -lvl 4 -y 1510
+preplace inst Computer_System.SysID -pg 1 -lvl 4 -y 1630
 preplace inst Computer_System.Video_PLL.video_pll -pg 1
 preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_DMA -pg 1
 preplace inst Computer_System.Nios2.cpu -pg 1
 preplace inst Computer_System.Nios2.reset_bridge -pg 1
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.b2p_adapter -pg 1
+preplace inst Computer_System.IP_UART_Avalon_0 -pg 1 -lvl 4 -y 630
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.p2b_adapter -pg 1
-preplace inst Computer_System.Interval_Timer_2 -pg 1 -lvl 4 -y 1170
-preplace inst Computer_System.Video_PLL -pg 1 -lvl 1 -y 1090
+preplace inst Computer_System.Interval_Timer_2 -pg 1 -lvl 4 -y 1270
+preplace inst Computer_System.Video_PLL -pg 1 -lvl 1 -y 1140
 preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_Scaler -pg 1
 preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Sys_Clk -pg 1
 preplace inst Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Set_Black_Transparent -pg 1
-preplace inst Computer_System.Onchip_SRAM -pg 1 -lvl 4 -y 1410
+preplace inst Computer_System.Onchip_SRAM -pg 1 -lvl 4 -y 1530
 preplace inst Computer_System.JTAG_to_FPGA_Bridge.b2p -pg 1
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.video_pll_ref_reset,(SLAVE)Video_PLL.ref_reset) 1 0 1 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(MASTER)Computer_System.sdram_clk,(MASTER)System_PLL.sdram_clk) 1 1 4 NJ 1600 NJ 1600 NJ 1600 NJ
-preplace netloc INTERCONNECT<net_container>Computer_System</net_container>(SLAVE)SDRAM.reset,(SLAVE)LEDs.reset,(SLAVE)Pushbuttons.reset,(SLAVE)Telemetre_us_Avalon_0.reset_sink,(SLAVE)JTAG_UART.reset,(SLAVE)Interval_Timer.reset,(MASTER)System_PLL.reset_source,(SLAVE)Interval_Timer_2.reset,(SLAVE)Onchip_SRAM.reset1,(SLAVE)HEX3_HEX0.reset,(SLAVE)Slider_Switches.reset,(SLAVE)HEX5_HEX4.reset,(SLAVE)Nios2.reset,(SLAVE)VGA_Subsystem.sys_reset,(SLAVE)SysID.reset,(MASTER)Nios2.debug_reset_request,(SLAVE)Arduino_GPIO.reset,(SLAVE)Arduino_Reset_N.reset,(SLAVE)IP_Servo_Avalon_0.reset,(SLAVE)JTAG_to_FPGA_Bridge.clk_reset) 1 1 3 450 1280 870 1450 1250
-preplace netloc POINT_TO_POINT<net_container>Computer_System</net_container>(SLAVE)VGA_Subsystem.vga_reset,(MASTER)Video_PLL.reset_source) 1 1 1 410
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Video_PLL.ref_clk,(SLAVE)Computer_System.video_pll_ref_clk) 1 0 1 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)IP_UART_Avalon_0.conduit_end,(SLAVE)Computer_System.uart_external) 1 0 4 NJ 680 NJ 680 NJ 680 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.system_pll_ref_clk,(SLAVE)System_PLL.ref_clk) 1 0 1 NJ
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)HEX5_HEX4.external_connection,(SLAVE)Computer_System.hex5_hex4) 1 0 4 NJ 260 NJ 260 NJ 260 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Pushbuttons.external_connection,(SLAVE)Computer_System.pushbuttons) 1 0 4 NJ 980 NJ 980 NJ 980 NJ
-preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)Pushbuttons.irq,(SLAVE)Arduino_GPIO.irq,(SLAVE)Interval_Timer.irq,(SLAVE)JTAG_UART.irq,(SLAVE)Interval_Timer_2.irq,(MASTER)Nios2.irq) 1 3 1 1310
-preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)LEDs.clk,(SLAVE)Arduino_Reset_N.clk,(MASTER)System_PLL.sys_clk,(SLAVE)HEX3_HEX0.clk,(SLAVE)Pushbuttons.clk,(SLAVE)IP_Servo_Avalon_0.clock,(SLAVE)Interval_Timer.clk,(SLAVE)Nios2.clk,(SLAVE)JTAG_UART.clk,(SLAVE)Telemetre_us_Avalon_0.clock,(SLAVE)SDRAM.clk,(SLAVE)Slider_Switches.clk,(SLAVE)HEX5_HEX4.clk,(SLAVE)JTAG_to_FPGA_Bridge.clk,(SLAVE)Arduino_GPIO.clk,(SLAVE)Interval_Timer_2.clk,(SLAVE)SysID.clk,(SLAVE)Onchip_SRAM.clk1,(SLAVE)VGA_Subsystem.sys_clk) 1 1 3 430 1240 890 1430 1290
+preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)LEDs.clk,(SLAVE)Onchip_SRAM.clk1,(MASTER)System_PLL.sys_clk,(SLAVE)Arduino_GPIO.clk,(SLAVE)IP_Servo_Avalon_0.clock,(SLAVE)Slider_Switches.clk,(SLAVE)Nios2.clk,(SLAVE)SysID.clk,(SLAVE)JTAG_to_FPGA_Bridge.clk,(SLAVE)Arduino_Reset_N.clk,(SLAVE)Interval_Timer.clk,(SLAVE)Telemetre_us_Avalon_0.clock,(SLAVE)SDRAM.clk,(SLAVE)IP_UART_Avalon_0.clock,(SLAVE)JTAG_UART.clk,(SLAVE)VGA_Subsystem.sys_clk,(SLAVE)HEX3_HEX0.clk,(SLAVE)Pushbuttons.clk,(SLAVE)Interval_Timer_2.clk,(SLAVE)HEX5_HEX4.clk) 1 1 3 430 1460 870 1210 1270
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Pushbuttons.external_connection,(SLAVE)Computer_System.pushbuttons) 1 0 4 NJ 1080 NJ 1080 NJ 1080 NJ
+preplace netloc INTERCONNECT<net_container>Computer_System</net_container>(SLAVE)Interval_Timer_2.reset,(SLAVE)IP_Servo_Avalon_0.reset,(MASTER)System_PLL.reset_source,(SLAVE)Pushbuttons.reset,(SLAVE)VGA_Subsystem.sys_reset,(SLAVE)LEDs.reset,(SLAVE)HEX5_HEX4.reset,(MASTER)Nios2.debug_reset_request,(SLAVE)JTAG_to_FPGA_Bridge.clk_reset,(SLAVE)SDRAM.reset,(SLAVE)SysID.reset,(SLAVE)IP_UART_Avalon_0.reset,(SLAVE)Onchip_SRAM.reset1,(SLAVE)HEX3_HEX0.reset,(SLAVE)Arduino_Reset_N.reset,(SLAVE)Nios2.reset,(SLAVE)Interval_Timer.reset,(SLAVE)JTAG_UART.reset,(SLAVE)Slider_Switches.reset,(SLAVE)Arduino_GPIO.reset,(SLAVE)Telemetre_us_Avalon_0.reset_sink) 1 1 3 450 1480 890 1510 1290
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Telemetre_us_Avalon_0.conduit_end,(SLAVE)Computer_System.telemetre_us) 1 0 4 NJ 480 NJ 480 NJ 480 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.leds,(SLAVE)LEDs.external_connection) 1 0 4 NJ 560 NJ 560 NJ 560 NJ
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.arduino_reset_n,(SLAVE)Arduino_Reset_N.external_connection) 1 0 4 NJ 60 NJ 60 NJ 60 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.telemetre_us,(SLAVE)Telemetre_us_Avalon_0.conduit_end) 1 0 4 NJ 480 NJ 480 NJ 480 NJ
+preplace netloc POINT_TO_POINT<net_container>Computer_System</net_container>(MASTER)Video_PLL.reset_source,(SLAVE)VGA_Subsystem.vga_reset) 1 1 1 410
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.hex3_hex0,(SLAVE)HEX3_HEX0.external_connection) 1 0 4 NJ 160 NJ 160 NJ 160 NJ
 preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.system_pll_ref_reset,(SLAVE)System_PLL.ref_reset) 1 0 1 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.vga,(SLAVE)VGA_Subsystem.vga) 1 0 2 NJ 1050 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)IP_Servo_Avalon_0.conduit_end,(SLAVE)Computer_System.servo_pwm) 1 0 4 NJ 380 NJ 380 NJ 380 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)LEDs.external_connection,(SLAVE)Computer_System.leds) 1 0 4 NJ 560 NJ 560 NJ 560 NJ
-preplace netloc INTERCONNECT<net_container>Computer_System</net_container>(SLAVE)Interval_Timer.s1,(SLAVE)Pushbuttons.s1,(MASTER)Nios2.instruction_master,(SLAVE)HEX3_HEX0.s1,(SLAVE)VGA_Subsystem.rgb_slave,(MASTER)JTAG_to_FPGA_Bridge.master,(SLAVE)SysID.control_slave,(SLAVE)LEDs.s1,(SLAVE)HEX5_HEX4.s1,(SLAVE)JTAG_UART.avalon_jtag_slave,(MASTER)Nios2.data_master,(MASTER)VGA_Subsystem.pixel_dma_master,(SLAVE)Interval_Timer_2.s1,(SLAVE)Onchip_SRAM.s2,(SLAVE)Nios2.debug_mem_slave,(SLAVE)SDRAM.s1,(SLAVE)VGA_Subsystem.char_buffer_control_slave,(SLAVE)Onchip_SRAM.s1,(SLAVE)IP_Servo_Avalon_0.avalon_slave_0,(SLAVE)VGA_Subsystem.pixel_dma_control_slave,(SLAVE)Slider_Switches.s1,(SLAVE)Arduino_GPIO.s1,(SLAVE)Arduino_Reset_N.s1,(SLAVE)Telemetre_us_Avalon_0.avalon_slave_0,(SLAVE)VGA_Subsystem.char_buffer_slave) 1 1 3 490 1260 850 1410 1270
+preplace netloc FAN_OUT<net_container>Computer_System</net_container>(SLAVE)Interval_Timer.irq,(SLAVE)JTAG_UART.irq,(SLAVE)Pushbuttons.irq,(SLAVE)Interval_Timer_2.irq,(SLAVE)Arduino_GPIO.irq,(MASTER)Nios2.irq) 1 3 1 1310
+preplace netloc INTERCONNECT<net_container>Computer_System</net_container>(SLAVE)Arduino_Reset_N.s1,(SLAVE)HEX5_HEX4.s1,(SLAVE)LEDs.s1,(MASTER)Nios2.instruction_master,(SLAVE)SDRAM.s1,(SLAVE)Onchip_SRAM.s2,(SLAVE)Interval_Timer.s1,(SLAVE)Telemetre_us_Avalon_0.avalon_slave_0,(SLAVE)Onchip_SRAM.s1,(SLAVE)VGA_Subsystem.char_buffer_slave,(SLAVE)Arduino_GPIO.s1,(SLAVE)SysID.control_slave,(SLAVE)HEX3_HEX0.s1,(SLAVE)Slider_Switches.s1,(SLAVE)JTAG_UART.avalon_jtag_slave,(SLAVE)Pushbuttons.s1,(SLAVE)IP_Servo_Avalon_0.avalon_slave_0,(MASTER)JTAG_to_FPGA_Bridge.master,(SLAVE)Interval_Timer_2.s1,(MASTER)VGA_Subsystem.pixel_dma_master,(SLAVE)VGA_Subsystem.pixel_dma_control_slave,(MASTER)Nios2.data_master,(SLAVE)Nios2.debug_mem_slave,(SLAVE)VGA_Subsystem.char_buffer_control_slave,(SLAVE)IP_UART_Avalon_0.avalon_slave_0,(SLAVE)VGA_Subsystem.rgb_slave) 1 1 3 490 1340 850 1230 1250
 preplace netloc POINT_TO_POINT<net_container>Computer_System</net_container>(MASTER)Nios2.custom_instruction_master,(SLAVE)Nios2_Floating_Point.s1) 1 3 1 N
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.video_pll_ref_clk,(SLAVE)Video_PLL.ref_clk) 1 0 1 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)System_PLL.ref_clk,(SLAVE)Computer_System.system_pll_ref_clk) 1 0 1 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)SDRAM.wire,(SLAVE)Computer_System.sdram) 1 0 4 NJ 700 NJ 700 NJ 700 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Slider_Switches.external_connection,(SLAVE)Computer_System.slider_switches) 1 0 4 NJ 760 NJ 760 NJ 760 NJ
-preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Arduino_GPIO.external_connection,(SLAVE)Computer_System.arduino_gpio) 1 0 4 NJ 860 NJ 860 NJ 860 NJ
-preplace netloc POINT_TO_POINT<net_container>Computer_System</net_container>(SLAVE)VGA_Subsystem.vga_clk,(MASTER)Video_PLL.vga_clk) 1 1 1 390
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Computer_System.servo_pwm,(SLAVE)IP_Servo_Avalon_0.conduit_end) 1 0 4 NJ 380 NJ 380 NJ 380 NJ
+preplace netloc POINT_TO_POINT<net_container>Computer_System</net_container>(MASTER)Video_PLL.vga_clk,(SLAVE)VGA_Subsystem.vga_clk) 1 1 1 390
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)VGA_Subsystem.vga,(SLAVE)Computer_System.vga) 1 0 2 NJ 1100 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(MASTER)System_PLL.sdram_clk,(MASTER)Computer_System.sdram_clk) 1 1 4 NJ 1600 NJ 1600 NJ 1520 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)SDRAM.wire,(SLAVE)Computer_System.sdram) 1 0 4 NJ 800 NJ 800 NJ 800 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Slider_Switches.external_connection,(SLAVE)Computer_System.slider_switches) 1 0 4 NJ 860 NJ 860 NJ 860 NJ
+preplace netloc EXPORT<net_container>Computer_System</net_container>(SLAVE)Arduino_GPIO.external_connection,(SLAVE)Computer_System.arduino_gpio) 1 0 4 NJ 960 NJ 960 NJ 960 NJ
 levelinfo -pg 1 0 140 1620
 levelinfo -hier Computer_System 150 230 670 1010 1380 1530

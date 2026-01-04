@@ -23,8 +23,6 @@
 			telemetre_us_dist              : out   std_logic_vector(9 downto 0);                     -- dist
 			telemetre_us_echo              : in    std_logic                     := 'X';             -- echo
 			telemetre_us_trig              : out   std_logic;                                        -- trig
-			uart_external_uart_rx          : in    std_logic                     := 'X';             -- uart_rx
-			uart_external_uart_tx          : out   std_logic;                                        -- uart_tx
 			vga_CLK                        : out   std_logic;                                        -- CLK
 			vga_HS                         : out   std_logic;                                        -- HS
 			vga_VS                         : out   std_logic;                                        -- VS

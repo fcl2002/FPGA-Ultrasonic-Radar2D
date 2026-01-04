@@ -142,8 +142,7 @@ ACDS_VERSION := 18.1
 ELF := telemetre_test.elf
 
 # Paths to C, C++, and assembly source files.
-C_SRCS += main.c
-C_SRCS += vga_controle.c
+C_SRCS := main.c
 CXX_SRCS :=
 ASM_SRCS :=
 

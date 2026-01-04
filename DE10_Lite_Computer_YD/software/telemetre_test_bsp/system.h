@@ -4,7 +4,7 @@
  * Machine generated for CPU 'Nios2' in SOPC Builder design 'Computer_System'
  * SOPC Builder design path: ../../Computer_System.sopcinfo
  *
- * Generated: Sat Jan 03 16:14:00 CET 2026
+ * Generated: Sun Jan 04 16:10:43 CET 2026
  */
 
 /*
@@ -208,8 +208,8 @@
 #define __ALTERA_UP_AVALON_VIDEO_DMA_CONTROLLER
 #define __ALTERA_UP_AVALON_VIDEO_RGB_RESAMPLER
 #define __IP_SERVO_AVALON
+#define __IP_UART_AVALON
 #define __TELEMETRE_US_AVALON
-#define __UART
 
 
 /*
@@ -278,6 +278,20 @@
 #define IP_SERVO_AVALON_0_NAME "/dev/IP_Servo_Avalon_0"
 #define IP_SERVO_AVALON_0_SPAN 4
 #define IP_SERVO_AVALON_0_TYPE "IP_Servo_Avalon"
+
+
+/*
+ * IP_UART_Avalon_0 configuration
+ *
+ */
+
+#define ALT_MODULE_CLASS_IP_UART_Avalon_0 IP_UART_Avalon
+#define IP_UART_AVALON_0_BASE 0x4000004
+#define IP_UART_AVALON_0_IRQ -1
+#define IP_UART_AVALON_0_IRQ_INTERRUPT_CONTROLLER_ID -1
+#define IP_UART_AVALON_0_NAME "/dev/IP_UART_Avalon_0"
+#define IP_UART_AVALON_0_SPAN 4
+#define IP_UART_AVALON_0_TYPE "IP_UART_Avalon"
 
 
 /*
@@ -511,7 +525,7 @@
 #define SYSID_IRQ_INTERRUPT_CONTROLLER_ID -1
 #define SYSID_NAME "/dev/SysID"
 #define SYSID_SPAN 8
-#define SYSID_TIMESTAMP 1767452474
+#define SYSID_TIMESTAMP 1767538360
 #define SYSID_TYPE "altera_avalon_sysid_qsys"
 
 
@@ -563,20 +577,6 @@
 #define TELEMETRE_US_AVALON_0_NAME "/dev/Telemetre_us_Avalon_0"
 #define TELEMETRE_US_AVALON_0_SPAN 4
 #define TELEMETRE_US_AVALON_0_TYPE "Telemetre_us_Avalon"
-
-
-/*
- * Uart_0 configuration
- *
- */
-
-#define ALT_MODULE_CLASS_Uart_0 Uart
-#define UART_0_BASE 0x4000004
-#define UART_0_IRQ -1
-#define UART_0_IRQ_INTERRUPT_CONTROLLER_ID -1
-#define UART_0_NAME "/dev/Uart_0"
-#define UART_0_SPAN 4
-#define UART_0_TYPE "Uart"
 
 
 /*

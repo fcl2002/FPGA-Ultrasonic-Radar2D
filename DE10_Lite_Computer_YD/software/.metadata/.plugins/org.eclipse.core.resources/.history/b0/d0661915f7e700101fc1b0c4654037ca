@@ -1,0 +1,160 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <math.h>
+#include <stdlib.h>
+#include "io.h"
+#include "system.h"
+
+// ============================================================================
+// CONFIGURAÇÃO DE ENDEREÇOS (Corrigido para o seu System.h)
+// ============================================================================
+
+// Endereço do Controlador DMA de Vídeo (Conforme sua imagem do Qsys)
+#define PIXEL_DMA_CTRL_BASE 0xFF203020
+
+// CORREÇÃO CRÍTICA:
+// Sua SDRAM começa em 0x0. Vamos colocar a imagem na metade da memória (offset 32MB)
+// para não sobrescrever o seu programa que roda no início da memória.
+#define VGA_MEMORY_BASE (0x80000000 | (SDRAM_BASE + 0x02000000))
+// Endereços dos periféricos
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+// Cores
+#define WHITE 0xFFFF
+#define BLACK 0x0000
+#define GREEN 0x07E0
+#define RED   0xF800
+#define ADDR_1 (0x80000000 | SDRAM_BASE)                // Inicio da SDRAM (sem cache)
+#define ADDR_2 (0x80000000 | (SDRAM_BASE + 0x02000000)) // Meio da SDRAM (sem cache)
+#define ADDR_3 0xC0000000                               // Endereço físico padrão de vídeo
+#define ADDR_4 0xC8000000
+// ============================================================================
+// FUNÇÕES GRÁFICAS
+// ============================================================================
+
+void plot_pixel(int x, int y, short color) {
+    if (x < 0 || x >= 320 || y < 0 || y >= 240) return;
+
+    // Endereço = Base + (y * 320 + x) * 2 bytes
+    int offset = (y * 320 + x) * 2;
+    IOWR_16DIRECT(VGA_MEMORY_BASE, offset, color);
+}
+
+void init_vga_manual() {
+    alt_putstr("Iniciando VGA...\n");
+
+    // 1. Reseta o controlador DMA (Bit 2 do registrador Status/Control - Offset 12)
+    IOWR_32DIRECT(PIXEL_DMA_CTRL_BASE, 12, 0x4);
+
+    // 2. Define o endereço do Buffer de Imagem (Offset 4)
+    IOWR_32DIRECT(PIXEL_DMA_CTRL_BASE, 4, VGA_MEMORY_BASE);
+
+    // 3. Define a resolução 320x240 (Offset 8) -> (Altura << 16) | Largura
+    IOWR_32DIRECT(PIXEL_DMA_CTRL_BASE, 8, (240 << 16) | 320);
+
+    // 4. Ativa o DMA (Bit 0 do registrador Status/Control - Offset 12)
+    IOWR_32DIRECT(PIXEL_DMA_CTRL_BASE, 12, 0x1);
+
+    // 5. Força a atualização do buffer (Swap) - Escreve qualquer coisa no Offset 0
+    IOWR_32DIRECT(PIXEL_DMA_CTRL_BASE, 0, 1);
+
+    // Espera um pouco para o sincronismo estabilizar
+    usleep(100000);
+
+    // Limpa a tela (Pinta tudo de preto)
+    for(int i = 0; i < (320 * 240); i++) {
+        IOWR_16DIRECT(VGA_MEMORY_BASE, i*2, BLACK);
+    }
+    alt_putstr("VGA Configurado!\n");
+}
+
+void draw_line(int x0, int y0, int x1, int y1, short color) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+    while (1) {
+        plot_pixel(x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
+
+// ============================================================================
+// MAIN
+// ============================================================================
+#define HARDWARE_MIN  60
+#define HARDWARE_MAX  200
+#define PI 3.14159265
+#define CENTER_X 160
+#define CENTER_Y 239
+
+int map_range(int x) {
+    return HARDWARE_MIN + (x * (HARDWARE_MAX - HARDWARE_MIN) / 255);
+}
+
+int main()
+{
+    alt_putstr("=== RADAR SYSTEM START ===\n");
+
+    // Inicializa VGA
+    init_vga_manual();
+
+    // Teste de vídeo: Desenha bordas brancas
+    draw_line(0, 0, 319, 0, WHITE);
+    draw_line(0, 0, 0, 239, WHITE);
+    draw_line(319, 0, 319, 239, WHITE);
+    draw_line(0, 239, 319, 239, WHITE);
+
+    int pos_virtual = 0;
+    int direcao = 1;
+    int prev_x = CENTER_X, prev_y = CENTER_Y;
+
+    while (1)
+    {
+        // 1. Apaga linha antiga
+        draw_line(CENTER_X, CENTER_Y, prev_x, prev_y, BLACK);
+
+        // 2. Move Servo
+        int pos_fisica = map_range(pos_virtual);
+        IOWR(SERVO_BASE, 0, pos_fisica);
+        usleep(15000); // Aguarda movimento
+
+        // 3. Lê Télémètre
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+        int dist_cm = radar_data & 0x3FF;
+        if (dist_cm > 100) dist_cm = 100;
+
+        // 4. Cálculos
+        float angulo_rad = ((float)pos_virtual / 255.0) * PI;
+
+        int scan_len = 200;
+        int scan_x = CENTER_X - (int)(scan_len * cos(angulo_rad));
+        int scan_y = CENTER_Y - (int)(scan_len * sin(angulo_rad));
+
+        int obst_x = CENTER_X - (int)(dist_cm * 2.0 * cos(angulo_rad));
+        int obst_y = CENTER_Y - (int)(dist_cm * 2.0 * sin(angulo_rad));
+
+        // 5. Desenha Radar
+        draw_line(CENTER_X, CENTER_Y, scan_x, scan_y, GREEN);
+
+        if (dist_cm < 90 && dist_cm > 4) {
+            plot_pixel(obst_x, obst_y, RED);
+            plot_pixel(obst_x+1, obst_y, RED);
+            plot_pixel(obst_x, obst_y+1, RED);
+            plot_pixel(obst_x+1, obst_y+1, RED);
+        }
+
+        prev_x = scan_x;
+        prev_y = scan_y;
+
+        pos_virtual += direcao * 4;
+        if (pos_virtual >= 255) direcao = -1;
+        else if (pos_virtual <= 0) direcao = 1;
+    }
+
+    return 0;
+}

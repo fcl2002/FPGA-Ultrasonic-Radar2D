@@ -8,38 +8,41 @@ use IEEE.numeric_std.all;
 
 entity Computer_System is
 	port (
-		arduino_gpio_export        : inout std_logic_vector(15 downto 0) := (others => '0'); --         arduino_gpio.export
-		arduino_reset_n_export     : out   std_logic;                                        --      arduino_reset_n.export
-		hex3_hex0_export           : out   std_logic_vector(31 downto 0);                    --            hex3_hex0.export
-		hex5_hex4_export           : out   std_logic_vector(15 downto 0);                    --            hex5_hex4.export
-		leds_export                : out   std_logic_vector(9 downto 0);                     --                 leds.export
-		pushbuttons_export         : in    std_logic_vector(1 downto 0)  := (others => '0'); --          pushbuttons.export
-		sdram_addr                 : out   std_logic_vector(12 downto 0);                    --                sdram.addr
-		sdram_ba                   : out   std_logic_vector(1 downto 0);                     --                     .ba
-		sdram_cas_n                : out   std_logic;                                        --                     .cas_n
-		sdram_cke                  : out   std_logic;                                        --                     .cke
-		sdram_cs_n                 : out   std_logic;                                        --                     .cs_n
-		sdram_dq                   : inout std_logic_vector(15 downto 0) := (others => '0'); --                     .dq
-		sdram_dqm                  : out   std_logic_vector(1 downto 0);                     --                     .dqm
-		sdram_ras_n                : out   std_logic;                                        --                     .ras_n
-		sdram_we_n                 : out   std_logic;                                        --                     .we_n
-		sdram_clk_clk              : out   std_logic;                                        --            sdram_clk.clk
-		slider_switches_export     : in    std_logic_vector(9 downto 0)  := (others => '0'); --      slider_switches.export
-		system_pll_ref_clk_clk     : in    std_logic                     := '0';             --   system_pll_ref_clk.clk
-		system_pll_ref_reset_reset : in    std_logic                     := '0';             -- system_pll_ref_reset.reset
-		telemetre_us_trig          : out   std_logic;                                        --         telemetre_us.trig
-		telemetre_us_echo          : in    std_logic                     := '0';             --                     .echo
-		telemetre_us_dist          : out   std_logic_vector(9 downto 0);                     --                     .dist
-		vga_CLK                    : out   std_logic;                                        --                  vga.CLK
-		vga_HS                     : out   std_logic;                                        --                     .HS
-		vga_VS                     : out   std_logic;                                        --                     .VS
-		vga_BLANK                  : out   std_logic;                                        --                     .BLANK
-		vga_SYNC                   : out   std_logic;                                        --                     .SYNC
-		vga_R                      : out   std_logic_vector(3 downto 0);                     --                     .R
-		vga_G                      : out   std_logic_vector(3 downto 0);                     --                     .G
-		vga_B                      : out   std_logic_vector(3 downto 0);                     --                     .B
-		video_pll_ref_clk_clk      : in    std_logic                     := '0';             --    video_pll_ref_clk.clk
-		video_pll_ref_reset_reset  : in    std_logic                     := '0'              --  video_pll_ref_reset.reset
+		arduino_gpio_export            : inout std_logic_vector(15 downto 0) := (others => '0'); --         arduino_gpio.export
+		arduino_reset_n_export         : out   std_logic;                                        --      arduino_reset_n.export
+		hex3_hex0_export               : out   std_logic_vector(31 downto 0);                    --            hex3_hex0.export
+		hex5_hex4_export               : out   std_logic_vector(15 downto 0);                    --            hex5_hex4.export
+		leds_export                    : out   std_logic_vector(9 downto 0);                     --                 leds.export
+		pushbuttons_export             : in    std_logic_vector(1 downto 0)  := (others => '0'); --          pushbuttons.export
+		sdram_addr                     : out   std_logic_vector(12 downto 0);                    --                sdram.addr
+		sdram_ba                       : out   std_logic_vector(1 downto 0);                     --                     .ba
+		sdram_cas_n                    : out   std_logic;                                        --                     .cas_n
+		sdram_cke                      : out   std_logic;                                        --                     .cke
+		sdram_cs_n                     : out   std_logic;                                        --                     .cs_n
+		sdram_dq                       : inout std_logic_vector(15 downto 0) := (others => '0'); --                     .dq
+		sdram_dqm                      : out   std_logic_vector(1 downto 0);                     --                     .dqm
+		sdram_ras_n                    : out   std_logic;                                        --                     .ras_n
+		sdram_we_n                     : out   std_logic;                                        --                     .we_n
+		sdram_clk_clk                  : out   std_logic;                                        --            sdram_clk.clk
+		servo_pwm_writeresponsevalid_n : out   std_logic;                                        --            servo_pwm.writeresponsevalid_n
+		slider_switches_export         : in    std_logic_vector(9 downto 0)  := (others => '0'); --      slider_switches.export
+		system_pll_ref_clk_clk         : in    std_logic                     := '0';             --   system_pll_ref_clk.clk
+		system_pll_ref_reset_reset     : in    std_logic                     := '0';             -- system_pll_ref_reset.reset
+		telemetre_us_dist              : out   std_logic_vector(9 downto 0);                     --         telemetre_us.dist
+		telemetre_us_echo              : in    std_logic                     := '0';             --                     .echo
+		telemetre_us_trig              : out   std_logic;                                        --                     .trig
+		uart_external_uart_rx          : in    std_logic                     := '0';             --        uart_external.uart_rx
+		uart_external_uart_tx          : out   std_logic;                                        --                     .uart_tx
+		vga_CLK                        : out   std_logic;                                        --                  vga.CLK
+		vga_HS                         : out   std_logic;                                        --                     .HS
+		vga_VS                         : out   std_logic;                                        --                     .VS
+		vga_BLANK                      : out   std_logic;                                        --                     .BLANK
+		vga_SYNC                       : out   std_logic;                                        --                     .SYNC
+		vga_R                          : out   std_logic_vector(3 downto 0);                     --                     .R
+		vga_G                          : out   std_logic_vector(3 downto 0);                     --                     .G
+		vga_B                          : out   std_logic_vector(3 downto 0);                     --                     .B
+		video_pll_ref_clk_clk          : in    std_logic                     := '0';             --    video_pll_ref_clk.clk
+		video_pll_ref_reset_reset      : in    std_logic                     := '0'              --  video_pll_ref_reset.reset
 	);
 end entity Computer_System;
 
@@ -96,6 +99,17 @@ architecture rtl of Computer_System is
 			out_port   : out std_logic_vector(15 downto 0)                     -- export
 		);
 	end component Computer_System_HEX5_HEX4;
+
+	component IP_Servo_Avalon is
+		port (
+			clk        : in  std_logic                     := 'X';             -- clk
+			chipselect : in  std_logic                     := 'X';             -- chipselect
+			write_n    : in  std_logic                     := 'X';             -- write_n
+			writedata  : in  std_logic_vector(31 downto 0) := (others => 'X'); -- writedata
+			commande   : out std_logic;                                        -- writeresponsevalid_n
+			reset_n    : in  std_logic                     := 'X'              -- reset_n
+		);
+	end component IP_Servo_Avalon;
 
 	component Computer_System_Interval_Timer is
 		port (
@@ -320,12 +334,26 @@ architecture rtl of Computer_System is
 			chipselect : in  std_logic                     := 'X'; -- chipselect
 			read_n     : in  std_logic                     := 'X'; -- read_n
 			readdata   : out std_logic_vector(31 downto 0);        -- readdata
-			trig       : out std_logic;                            -- trig
-			echo       : in  std_logic                     := 'X'; -- echo
 			dist_cm    : out std_logic_vector(9 downto 0);         -- dist
+			echo       : in  std_logic                     := 'X'; -- echo
+			trig       : out std_logic;                            -- trig
 			rst_n      : in  std_logic                     := 'X'  -- reset_n
 		);
 	end component Telemetre_us_Avalon;
+
+	component IP_Uart_Avalon is
+		port (
+			clk        : in  std_logic                     := 'X';             -- clk
+			reset_n    : in  std_logic                     := 'X';             -- reset_n
+			chipselect : in  std_logic                     := 'X';             -- chipselect
+			write_n    : in  std_logic                     := 'X';             -- write_n
+			writedata  : in  std_logic_vector(31 downto 0) := (others => 'X'); -- writedata
+			read_n     : in  std_logic                     := 'X';             -- read_n
+			readdata   : out std_logic_vector(31 downto 0);                    -- readdata
+			uart_rx    : in  std_logic                     := 'X';             -- uart_rx
+			uart_tx    : out std_logic                                         -- uart_tx
+		);
+	end component IP_Uart_Avalon;
 
 	component Computer_System_VGA_Subsystem is
 		port (
@@ -593,6 +621,9 @@ architecture rtl of Computer_System is
 			Interval_Timer_2_s1_readdata                              : in  std_logic_vector(15 downto 0) := (others => 'X'); -- readdata
 			Interval_Timer_2_s1_writedata                             : out std_logic_vector(15 downto 0);                    -- writedata
 			Interval_Timer_2_s1_chipselect                            : out std_logic;                                        -- chipselect
+			IP_Servo_Avalon_0_avalon_slave_0_write                    : out std_logic;                                        -- write
+			IP_Servo_Avalon_0_avalon_slave_0_writedata                : out std_logic_vector(31 downto 0);                    -- writedata
+			IP_Servo_Avalon_0_avalon_slave_0_chipselect               : out std_logic;                                        -- chipselect
 			JTAG_UART_avalon_jtag_slave_address                       : out std_logic_vector(0 downto 0);                     -- address
 			JTAG_UART_avalon_jtag_slave_write                         : out std_logic;                                        -- write
 			JTAG_UART_avalon_jtag_slave_read                          : out std_logic;                                        -- read
@@ -648,6 +679,11 @@ architecture rtl of Computer_System is
 			Telemetre_us_Avalon_0_avalon_slave_0_read                 : out std_logic;                                        -- read
 			Telemetre_us_Avalon_0_avalon_slave_0_readdata             : in  std_logic_vector(31 downto 0) := (others => 'X'); -- readdata
 			Telemetre_us_Avalon_0_avalon_slave_0_chipselect           : out std_logic;                                        -- chipselect
+			Uart_0_avalon_slave_0_write                               : out std_logic;                                        -- write
+			Uart_0_avalon_slave_0_read                                : out std_logic;                                        -- read
+			Uart_0_avalon_slave_0_readdata                            : in  std_logic_vector(31 downto 0) := (others => 'X'); -- readdata
+			Uart_0_avalon_slave_0_writedata                           : out std_logic_vector(31 downto 0);                    -- writedata
+			Uart_0_avalon_slave_0_chipselect                          : out std_logic;                                        -- chipselect
 			VGA_Subsystem_char_buffer_control_slave_address           : out std_logic_vector(1 downto 0);                     -- address
 			VGA_Subsystem_char_buffer_control_slave_write             : out std_logic;                                        -- write
 			VGA_Subsystem_char_buffer_control_slave_read              : out std_logic;                                        -- read
@@ -817,7 +853,7 @@ architecture rtl of Computer_System is
 		);
 	end component computer_system_rst_controller_001;
 
-	signal system_pll_sys_clk_clk                                                   : std_logic;                     -- System_PLL:sys_clk_clk -> [Arduino_GPIO:clk, Arduino_Reset_N:clk, HEX3_HEX0:clk, HEX5_HEX4:clk, Interval_Timer:clk, Interval_Timer_2:clk, JTAG_UART:clk, JTAG_to_FPGA_Bridge:clk_clk, LEDs:clk, Nios2:clk, Onchip_SRAM:clk, Pushbuttons:clk, SDRAM:clk, Slider_Switches:clk, SysID:clock, Telemetre_us_Avalon_0:clk, VGA_Subsystem:sys_clk_clk, irq_mapper:clk, mm_interconnect_0:System_PLL_sys_clk_clk, rst_controller:clk, rst_controller_001:clk]
+	signal system_pll_sys_clk_clk                                                   : std_logic;                     -- System_PLL:sys_clk_clk -> [Arduino_GPIO:clk, Arduino_Reset_N:clk, HEX3_HEX0:clk, HEX5_HEX4:clk, IP_Servo_Avalon_0:clk, Interval_Timer:clk, Interval_Timer_2:clk, JTAG_UART:clk, JTAG_to_FPGA_Bridge:clk_clk, LEDs:clk, Nios2:clk, Onchip_SRAM:clk, Pushbuttons:clk, SDRAM:clk, Slider_Switches:clk, SysID:clock, Telemetre_us_Avalon_0:clk, Uart_0:clk, VGA_Subsystem:sys_clk_clk, irq_mapper:clk, mm_interconnect_0:System_PLL_sys_clk_clk, rst_controller:clk, rst_controller_001:clk]
 	signal video_pll_vga_clk_clk                                                    : std_logic;                     -- Video_PLL:vga_clk_clk -> VGA_Subsystem:vga_clk_clk
 	signal system_pll_reset_source_reset                                            : std_logic;                     -- System_PLL:reset_source_reset -> [JTAG_to_FPGA_Bridge:clk_reset_reset, rst_controller:reset_in0, rst_controller_001:reset_in1, system_pll_reset_source_reset:in]
 	signal video_pll_reset_source_reset                                             : std_logic;                     -- Video_PLL:reset_source_reset -> video_pll_reset_source_reset:in
@@ -918,6 +954,14 @@ architecture rtl of Computer_System is
 	signal mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_chipselect        : std_logic;                     -- mm_interconnect_0:Telemetre_us_Avalon_0_avalon_slave_0_chipselect -> Telemetre_us_Avalon_0:chipselect
 	signal mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_readdata          : std_logic_vector(31 downto 0); -- Telemetre_us_Avalon_0:readdata -> mm_interconnect_0:Telemetre_us_Avalon_0_avalon_slave_0_readdata
 	signal mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read              : std_logic;                     -- mm_interconnect_0:Telemetre_us_Avalon_0_avalon_slave_0_read -> mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read:in
+	signal mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_chipselect            : std_logic;                     -- mm_interconnect_0:IP_Servo_Avalon_0_avalon_slave_0_chipselect -> IP_Servo_Avalon_0:chipselect
+	signal mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write                 : std_logic;                     -- mm_interconnect_0:IP_Servo_Avalon_0_avalon_slave_0_write -> mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write:in
+	signal mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_writedata             : std_logic_vector(31 downto 0); -- mm_interconnect_0:IP_Servo_Avalon_0_avalon_slave_0_writedata -> IP_Servo_Avalon_0:writedata
+	signal mm_interconnect_0_uart_0_avalon_slave_0_chipselect                       : std_logic;                     -- mm_interconnect_0:Uart_0_avalon_slave_0_chipselect -> Uart_0:chipselect
+	signal mm_interconnect_0_uart_0_avalon_slave_0_readdata                         : std_logic_vector(31 downto 0); -- Uart_0:readdata -> mm_interconnect_0:Uart_0_avalon_slave_0_readdata
+	signal mm_interconnect_0_uart_0_avalon_slave_0_read                             : std_logic;                     -- mm_interconnect_0:Uart_0_avalon_slave_0_read -> mm_interconnect_0_uart_0_avalon_slave_0_read:in
+	signal mm_interconnect_0_uart_0_avalon_slave_0_write                            : std_logic;                     -- mm_interconnect_0:Uart_0_avalon_slave_0_write -> mm_interconnect_0_uart_0_avalon_slave_0_write:in
+	signal mm_interconnect_0_uart_0_avalon_slave_0_writedata                        : std_logic_vector(31 downto 0); -- mm_interconnect_0:Uart_0_avalon_slave_0_writedata -> Uart_0:writedata
 	signal mm_interconnect_0_vga_subsystem_char_buffer_control_slave_readdata       : std_logic_vector(31 downto 0); -- VGA_Subsystem:char_buffer_control_slave_readdata -> mm_interconnect_0:VGA_Subsystem_char_buffer_control_slave_readdata
 	signal mm_interconnect_0_vga_subsystem_char_buffer_control_slave_address        : std_logic_vector(1 downto 0);  -- mm_interconnect_0:VGA_Subsystem_char_buffer_control_slave_address -> VGA_Subsystem:char_buffer_control_slave_address
 	signal mm_interconnect_0_vga_subsystem_char_buffer_control_slave_read           : std_logic;                     -- mm_interconnect_0:VGA_Subsystem_char_buffer_control_slave_read -> VGA_Subsystem:char_buffer_control_slave_read
@@ -1029,6 +1073,9 @@ architecture rtl of Computer_System is
 	signal mm_interconnect_0_jtag_uart_avalon_jtag_slave_read_ports_inv             : std_logic;                     -- mm_interconnect_0_jtag_uart_avalon_jtag_slave_read:inv -> JTAG_UART:av_read_n
 	signal mm_interconnect_0_jtag_uart_avalon_jtag_slave_write_ports_inv            : std_logic;                     -- mm_interconnect_0_jtag_uart_avalon_jtag_slave_write:inv -> JTAG_UART:av_write_n
 	signal mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read_ports_inv    : std_logic;                     -- mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read:inv -> Telemetre_us_Avalon_0:read_n
+	signal mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write_ports_inv       : std_logic;                     -- mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write:inv -> IP_Servo_Avalon_0:write_n
+	signal mm_interconnect_0_uart_0_avalon_slave_0_read_ports_inv                   : std_logic;                     -- mm_interconnect_0_uart_0_avalon_slave_0_read:inv -> Uart_0:read_n
+	signal mm_interconnect_0_uart_0_avalon_slave_0_write_ports_inv                  : std_logic;                     -- mm_interconnect_0_uart_0_avalon_slave_0_write:inv -> Uart_0:write_n
 	signal mm_interconnect_0_sdram_s1_read_ports_inv                                : std_logic;                     -- mm_interconnect_0_sdram_s1_read:inv -> SDRAM:az_rd_n
 	signal mm_interconnect_0_sdram_s1_byteenable_ports_inv                          : std_logic_vector(1 downto 0);  -- mm_interconnect_0_sdram_s1_byteenable:inv -> SDRAM:az_be_n
 	signal mm_interconnect_0_sdram_s1_write_ports_inv                               : std_logic;                     -- mm_interconnect_0_sdram_s1_write:inv -> SDRAM:az_wr_n
@@ -1040,7 +1087,7 @@ architecture rtl of Computer_System is
 	signal mm_interconnect_0_arduino_reset_n_s1_write_ports_inv                     : std_logic;                     -- mm_interconnect_0_arduino_reset_n_s1_write:inv -> Arduino_Reset_N:write_n
 	signal mm_interconnect_0_interval_timer_s1_write_ports_inv                      : std_logic;                     -- mm_interconnect_0_interval_timer_s1_write:inv -> Interval_Timer:write_n
 	signal mm_interconnect_0_interval_timer_2_s1_write_ports_inv                    : std_logic;                     -- mm_interconnect_0_interval_timer_2_s1_write:inv -> Interval_Timer_2:write_n
-	signal rst_controller_reset_out_reset_ports_inv                                 : std_logic;                     -- rst_controller_reset_out_reset:inv -> [Arduino_GPIO:reset_n, Arduino_Reset_N:reset_n, HEX3_HEX0:reset_n, HEX5_HEX4:reset_n, Interval_Timer:reset_n, Interval_Timer_2:reset_n, JTAG_UART:rst_n, LEDs:reset_n, Pushbuttons:reset_n, SDRAM:reset_n, Slider_Switches:reset_n, SysID:reset_n, Telemetre_us_Avalon_0:rst_n]
+	signal rst_controller_reset_out_reset_ports_inv                                 : std_logic;                     -- rst_controller_reset_out_reset:inv -> [Arduino_GPIO:reset_n, Arduino_Reset_N:reset_n, HEX3_HEX0:reset_n, HEX5_HEX4:reset_n, IP_Servo_Avalon_0:reset_n, Interval_Timer:reset_n, Interval_Timer_2:reset_n, JTAG_UART:rst_n, LEDs:reset_n, Pushbuttons:reset_n, SDRAM:reset_n, Slider_Switches:reset_n, SysID:reset_n, Telemetre_us_Avalon_0:rst_n, Uart_0:reset_n]
 	signal rst_controller_001_reset_out_reset_ports_inv                             : std_logic;                     -- rst_controller_001_reset_out_reset:inv -> Nios2:reset_n
 
 begin
@@ -1092,6 +1139,16 @@ begin
 			chipselect => mm_interconnect_0_hex5_hex4_s1_chipselect,      --                    .chipselect
 			readdata   => mm_interconnect_0_hex5_hex4_s1_readdata,        --                    .readdata
 			out_port   => hex5_hex4_export                                -- external_connection.export
+		);
+
+	ip_servo_avalon_0 : component IP_Servo_Avalon
+		port map (
+			clk        => system_pll_sys_clk_clk,                                             --          clock.clk
+			chipselect => mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_chipselect,      -- avalon_slave_0.chipselect
+			write_n    => mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write_ports_inv, --               .write_n
+			writedata  => mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_writedata,       --               .writedata
+			commande   => servo_pwm_writeresponsevalid_n,                                     --    conduit_end.writeresponsevalid_n
+			reset_n    => rst_controller_reset_out_reset_ports_inv                            --          reset.reset_n
 		);
 
 	interval_timer : component Computer_System_Interval_Timer
@@ -1317,10 +1374,23 @@ begin
 			chipselect => mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_chipselect,     -- avalon_slave_0.chipselect
 			read_n     => mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read_ports_inv, --               .read_n
 			readdata   => mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_readdata,       --               .readdata
-			trig       => telemetre_us_trig,                                                     --   telemetre_us.trig
+			dist_cm    => telemetre_us_dist,                                                     --    conduit_end.dist
 			echo       => telemetre_us_echo,                                                     --               .echo
-			dist_cm    => telemetre_us_dist,                                                     --               .dist
+			trig       => telemetre_us_trig,                                                     --               .trig
 			rst_n      => rst_controller_reset_out_reset_ports_inv                               --     reset_sink.reset_n
+		);
+
+	uart_0 : component IP_Uart_Avalon
+		port map (
+			clk        => system_pll_sys_clk_clk,                                  --          clock.clk
+			reset_n    => rst_controller_reset_out_reset_ports_inv,                --          reset.reset_n
+			chipselect => mm_interconnect_0_uart_0_avalon_slave_0_chipselect,      -- avalon_slave_0.chipselect
+			write_n    => mm_interconnect_0_uart_0_avalon_slave_0_write_ports_inv, --               .write_n
+			writedata  => mm_interconnect_0_uart_0_avalon_slave_0_writedata,       --               .writedata
+			read_n     => mm_interconnect_0_uart_0_avalon_slave_0_read_ports_inv,  --               .read_n
+			readdata   => mm_interconnect_0_uart_0_avalon_slave_0_readdata,        --               .readdata
+			uart_rx    => uart_external_uart_rx,                                   --    conduit_end.uart_rx
+			uart_tx    => uart_external_uart_tx                                    --               .uart_tx
 		);
 
 	vga_subsystem : component Computer_System_VGA_Subsystem
@@ -1584,6 +1654,9 @@ begin
 			Interval_Timer_2_s1_readdata                              => mm_interconnect_0_interval_timer_2_s1_readdata,                       --                                                    .readdata
 			Interval_Timer_2_s1_writedata                             => mm_interconnect_0_interval_timer_2_s1_writedata,                      --                                                    .writedata
 			Interval_Timer_2_s1_chipselect                            => mm_interconnect_0_interval_timer_2_s1_chipselect,                     --                                                    .chipselect
+			IP_Servo_Avalon_0_avalon_slave_0_write                    => mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write,             --                    IP_Servo_Avalon_0_avalon_slave_0.write
+			IP_Servo_Avalon_0_avalon_slave_0_writedata                => mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_writedata,         --                                                    .writedata
+			IP_Servo_Avalon_0_avalon_slave_0_chipselect               => mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_chipselect,        --                                                    .chipselect
 			JTAG_UART_avalon_jtag_slave_address                       => mm_interconnect_0_jtag_uart_avalon_jtag_slave_address,                --                         JTAG_UART_avalon_jtag_slave.address
 			JTAG_UART_avalon_jtag_slave_write                         => mm_interconnect_0_jtag_uart_avalon_jtag_slave_write,                  --                                                    .write
 			JTAG_UART_avalon_jtag_slave_read                          => mm_interconnect_0_jtag_uart_avalon_jtag_slave_read,                   --                                                    .read
@@ -1639,6 +1712,11 @@ begin
 			Telemetre_us_Avalon_0_avalon_slave_0_read                 => mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read,          --                Telemetre_us_Avalon_0_avalon_slave_0.read
 			Telemetre_us_Avalon_0_avalon_slave_0_readdata             => mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_readdata,      --                                                    .readdata
 			Telemetre_us_Avalon_0_avalon_slave_0_chipselect           => mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_chipselect,    --                                                    .chipselect
+			Uart_0_avalon_slave_0_write                               => mm_interconnect_0_uart_0_avalon_slave_0_write,                        --                               Uart_0_avalon_slave_0.write
+			Uart_0_avalon_slave_0_read                                => mm_interconnect_0_uart_0_avalon_slave_0_read,                         --                                                    .read
+			Uart_0_avalon_slave_0_readdata                            => mm_interconnect_0_uart_0_avalon_slave_0_readdata,                     --                                                    .readdata
+			Uart_0_avalon_slave_0_writedata                           => mm_interconnect_0_uart_0_avalon_slave_0_writedata,                    --                                                    .writedata
+			Uart_0_avalon_slave_0_chipselect                          => mm_interconnect_0_uart_0_avalon_slave_0_chipselect,                   --                                                    .chipselect
 			VGA_Subsystem_char_buffer_control_slave_address           => mm_interconnect_0_vga_subsystem_char_buffer_control_slave_address,    --             VGA_Subsystem_char_buffer_control_slave.address
 			VGA_Subsystem_char_buffer_control_slave_write             => mm_interconnect_0_vga_subsystem_char_buffer_control_slave_write,      --                                                    .write
 			VGA_Subsystem_char_buffer_control_slave_read              => mm_interconnect_0_vga_subsystem_char_buffer_control_slave_read,       --                                                    .read
@@ -1813,6 +1891,12 @@ begin
 	mm_interconnect_0_jtag_uart_avalon_jtag_slave_write_ports_inv <= not mm_interconnect_0_jtag_uart_avalon_jtag_slave_write;
 
 	mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read_ports_inv <= not mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read;
+
+	mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write_ports_inv <= not mm_interconnect_0_ip_servo_avalon_0_avalon_slave_0_write;
+
+	mm_interconnect_0_uart_0_avalon_slave_0_read_ports_inv <= not mm_interconnect_0_uart_0_avalon_slave_0_read;
+
+	mm_interconnect_0_uart_0_avalon_slave_0_write_ports_inv <= not mm_interconnect_0_uart_0_avalon_slave_0_write;
 
 	mm_interconnect_0_sdram_s1_read_ports_inv <= not mm_interconnect_0_sdram_s1_read;
 

@@ -23,9 +23,6 @@ module Computer_System (
 		input  wire [9:0]  slider_switches_export,     //      slider_switches.export
 		input  wire        system_pll_ref_clk_clk,     //   system_pll_ref_clk.clk
 		input  wire        system_pll_ref_reset_reset, // system_pll_ref_reset.reset
-		output wire        telemetre_us_trig,          //         telemetre_us.trig
-		input  wire        telemetre_us_echo,          //                     .echo
-		output wire [9:0]  telemetre_us_dist,          //                     .dist
 		output wire        vga_CLK,                    //                  vga.CLK
 		output wire        vga_HS,                     //                     .HS
 		output wire        vga_VS,                     //                     .VS
@@ -38,7 +35,7 @@ module Computer_System (
 		input  wire        video_pll_ref_reset_reset   //  video_pll_ref_reset.reset
 	);
 
-	wire         system_pll_sys_clk_clk;                                                   // System_PLL:sys_clk_clk -> [Arduino_GPIO:clk, Arduino_Reset_N:clk, HEX3_HEX0:clk, HEX5_HEX4:clk, Interval_Timer:clk, Interval_Timer_2:clk, JTAG_UART:clk, JTAG_to_FPGA_Bridge:clk_clk, LEDs:clk, Nios2:clk, Onchip_SRAM:clk, Pushbuttons:clk, SDRAM:clk, Slider_Switches:clk, SysID:clock, Telemetre_us_Avalon_0:clk, VGA_Subsystem:sys_clk_clk, irq_mapper:clk, mm_interconnect_0:System_PLL_sys_clk_clk, rst_controller:clk, rst_controller_001:clk]
+	wire         system_pll_sys_clk_clk;                                                   // System_PLL:sys_clk_clk -> [Arduino_GPIO:clk, Arduino_Reset_N:clk, HEX3_HEX0:clk, HEX5_HEX4:clk, Interval_Timer:clk, Interval_Timer_2:clk, JTAG_UART:clk, JTAG_to_FPGA_Bridge:clk_clk, LEDs:clk, Nios2:clk, Onchip_SRAM:clk, Pushbuttons:clk, SDRAM:clk, Slider_Switches:clk, SysID:clock, VGA_Subsystem:sys_clk_clk, irq_mapper:clk, mm_interconnect_0:System_PLL_sys_clk_clk, rst_controller:clk, rst_controller_001:clk]
 	wire         video_pll_vga_clk_clk;                                                    // Video_PLL:vga_clk_clk -> VGA_Subsystem:vga_clk_clk
 	wire         system_pll_reset_source_reset;                                            // System_PLL:reset_source_reset -> [JTAG_to_FPGA_Bridge:clk_reset_reset, VGA_Subsystem:sys_reset_reset_n, rst_controller:reset_in0, rst_controller_001:reset_in1]
 	wire         video_pll_reset_source_reset;                                             // Video_PLL:reset_source_reset -> VGA_Subsystem:vga_reset_reset_n
@@ -136,9 +133,6 @@ module Computer_System (
 	wire         mm_interconnect_0_jtag_uart_avalon_jtag_slave_read;                       // mm_interconnect_0:JTAG_UART_avalon_jtag_slave_read -> JTAG_UART:av_read_n
 	wire         mm_interconnect_0_jtag_uart_avalon_jtag_slave_write;                      // mm_interconnect_0:JTAG_UART_avalon_jtag_slave_write -> JTAG_UART:av_write_n
 	wire  [31:0] mm_interconnect_0_jtag_uart_avalon_jtag_slave_writedata;                  // mm_interconnect_0:JTAG_UART_avalon_jtag_slave_writedata -> JTAG_UART:av_writedata
-	wire         mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_chipselect;        // mm_interconnect_0:Telemetre_us_Avalon_0_avalon_slave_0_chipselect -> Telemetre_us_Avalon_0:chipselect
-	wire  [31:0] mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_readdata;          // Telemetre_us_Avalon_0:readdata -> mm_interconnect_0:Telemetre_us_Avalon_0_avalon_slave_0_readdata
-	wire         mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read;              // mm_interconnect_0:Telemetre_us_Avalon_0_avalon_slave_0_read -> Telemetre_us_Avalon_0:read_n
 	wire  [31:0] mm_interconnect_0_vga_subsystem_char_buffer_control_slave_readdata;       // VGA_Subsystem:char_buffer_control_slave_readdata -> mm_interconnect_0:VGA_Subsystem_char_buffer_control_slave_readdata
 	wire   [1:0] mm_interconnect_0_vga_subsystem_char_buffer_control_slave_address;        // mm_interconnect_0:VGA_Subsystem_char_buffer_control_slave_address -> VGA_Subsystem:char_buffer_control_slave_address
 	wire         mm_interconnect_0_vga_subsystem_char_buffer_control_slave_read;           // mm_interconnect_0:VGA_Subsystem_char_buffer_control_slave_read -> VGA_Subsystem:char_buffer_control_slave_read
@@ -241,7 +235,7 @@ module Computer_System (
 	wire         irq_mapper_receiver3_irq;                                                 // Interval_Timer:irq -> irq_mapper:receiver3_irq
 	wire         irq_mapper_receiver4_irq;                                                 // Interval_Timer_2:irq -> irq_mapper:receiver4_irq
 	wire  [31:0] nios2_irq_irq;                                                            // irq_mapper:sender_irq -> Nios2:irq
-	wire         rst_controller_reset_out_reset;                                           // rst_controller:reset_out -> [Arduino_GPIO:reset_n, Arduino_Reset_N:reset_n, HEX3_HEX0:reset_n, HEX5_HEX4:reset_n, Interval_Timer:reset_n, Interval_Timer_2:reset_n, JTAG_UART:rst_n, LEDs:reset_n, Onchip_SRAM:reset, Pushbuttons:reset_n, SDRAM:reset_n, Slider_Switches:reset_n, SysID:reset_n, Telemetre_us_Avalon_0:rst_n, mm_interconnect_0:JTAG_UART_reset_reset_bridge_in_reset_reset, mm_interconnect_0:JTAG_to_FPGA_Bridge_clk_reset_reset_bridge_in_reset_reset, rst_translator:in_reset]
+	wire         rst_controller_reset_out_reset;                                           // rst_controller:reset_out -> [Arduino_GPIO:reset_n, Arduino_Reset_N:reset_n, HEX3_HEX0:reset_n, HEX5_HEX4:reset_n, Interval_Timer:reset_n, Interval_Timer_2:reset_n, JTAG_UART:rst_n, LEDs:reset_n, Onchip_SRAM:reset, Pushbuttons:reset_n, SDRAM:reset_n, Slider_Switches:reset_n, SysID:reset_n, mm_interconnect_0:JTAG_UART_reset_reset_bridge_in_reset_reset, mm_interconnect_0:JTAG_to_FPGA_Bridge_clk_reset_reset_bridge_in_reset_reset, rst_translator:in_reset]
 	wire         rst_controller_reset_out_reset_req;                                       // rst_controller:reset_req -> [Onchip_SRAM:reset_req, rst_translator:reset_req_in]
 	wire         rst_controller_001_reset_out_reset;                                       // rst_controller_001:reset_out -> [Nios2:reset_n, irq_mapper:reset, mm_interconnect_0:Nios2_reset_reset_bridge_in_reset_reset]
 	wire         nios2_debug_reset_request_reset;                                          // Nios2:debug_reset_request -> rst_controller_001:reset_in0
@@ -491,17 +485,6 @@ module Computer_System (
 		.sys_clk_clk        (system_pll_sys_clk_clk),        //      sys_clk.clk
 		.sdram_clk_clk      (sdram_clk_clk),                 //    sdram_clk.clk
 		.reset_source_reset (system_pll_reset_source_reset)  // reset_source.reset
-	);
-
-	Telemetre_us_Avalon telemetre_us_avalon_0 (
-		.clk        (system_pll_sys_clk_clk),                                            //          clock.clk
-		.chipselect (mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_chipselect), // avalon_slave_0.chipselect
-		.read_n     (~mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read),      //               .read_n
-		.readdata   (mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_readdata),   //               .readdata
-		.trig       (telemetre_us_trig),                                                 //   telemetre_us.trig
-		.echo       (telemetre_us_echo),                                                 //               .echo
-		.dist_cm    (telemetre_us_dist),                                                 //               .dist
-		.rst_n      (~rst_controller_reset_out_reset)                                    //     reset_sink.reset_n
 	);
 
 	Computer_System_VGA_Subsystem vga_subsystem (
@@ -809,9 +792,6 @@ module Computer_System (
 		.Slider_Switches_s1_readdata                               (mm_interconnect_0_slider_switches_s1_readdata),                        //                                                    .readdata
 		.SysID_control_slave_address                               (mm_interconnect_0_sysid_control_slave_address),                        //                                 SysID_control_slave.address
 		.SysID_control_slave_readdata                              (mm_interconnect_0_sysid_control_slave_readdata),                       //                                                    .readdata
-		.Telemetre_us_Avalon_0_avalon_slave_0_read                 (mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_read),          //                Telemetre_us_Avalon_0_avalon_slave_0.read
-		.Telemetre_us_Avalon_0_avalon_slave_0_readdata             (mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_readdata),      //                                                    .readdata
-		.Telemetre_us_Avalon_0_avalon_slave_0_chipselect           (mm_interconnect_0_telemetre_us_avalon_0_avalon_slave_0_chipselect),    //                                                    .chipselect
 		.VGA_Subsystem_char_buffer_control_slave_address           (mm_interconnect_0_vga_subsystem_char_buffer_control_slave_address),    //             VGA_Subsystem_char_buffer_control_slave.address
 		.VGA_Subsystem_char_buffer_control_slave_write             (mm_interconnect_0_vga_subsystem_char_buffer_control_slave_write),      //                                                    .write
 		.VGA_Subsystem_char_buffer_control_slave_read              (mm_interconnect_0_vga_subsystem_char_buffer_control_slave_read),       //                                                    .read

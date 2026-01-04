@@ -1,0 +1,33 @@
+#include "sys/alt_stdio.h"
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// Endereço base da SUA Uart (Confira no system.h)
+#define MINHA_UART_BASE IP_UART_AVALON_0_BASE
+
+void uart_send_char(char c) {
+    // Espera o transmissor ficar livre (Bit 8 do status)
+    // No meu VHDL, bit 8 = tx_busy. Se for 1, espera.
+    while( (IORD(MINHA_UART_BASE, 0) & (1<<8)) );
+
+    // Escreve o char
+    IOWR(MINHA_UART_BASE, 0, c);
+}
+
+void uart_send_string(char* str) {
+    while (*str) {
+        uart_send_char(*str++);
+    }
+}
+
+int main()
+{
+    alt_putstr("Teste de UART...\n");
+
+    while(1) {
+        uart_send_string("Radar Funcionando!\r\n");
+        usleep(1000000); // 1s
+    }
+    return 0;
+}

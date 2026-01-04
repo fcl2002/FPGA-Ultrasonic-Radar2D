@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include "system.h"
+#include "altera_up_avalon_video_dma_controller.h" // <--- Biblioteca Correta
+#include "altera_up_avalon_video_character_buffer_dma.h"
+
+// Definições da Tela
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+#define RADAR_CENTER_X 160
+#define RADAR_CENTER_Y 239
+#define MAX_RADIUS 220
+#define PI 3.14159265
+
+// Cores (RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+
+// Variáveis Globais com os Tipos Corretos
+alt_up_video_dma_dev *pixel_dma_dev; // <--- Tipo Correto
+alt_up_char_buffer_dev *char_buf_dev;
+
+void init_vga() {
+    // 1. Abrir o Video DMA Controller (Pixel Buffer)
+    // O nome deve ser verificado no system.h, geralmente é "/dev/VGA_Subsystem_VGA_Pixel_DMA"
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+
+    if (pixel_dma_dev == NULL) {
+        printf("Erro: Nao foi possivel abrir o Video DMA (Pixel Buffer).\n");
+    } else {
+        // Configuração importante para o Video DMA Controller:
+        // Definir o endereço do buffer e resolução (se necessário pelo driver)
+        // Geralmente o driver já pega do hardware, mas limpar a tela é diferente aqui.
+
+        // Função para limpar a tela neste driver: desenhar uma caixa preta gigante
+        alt_up_video_dma_screen_clear(pixel_dma_dev, 0);
+    }
+
+    // 2. Abrir o Character Buffer (Texto)
+    char_buf_dev = alt_up_char_buffer_open_dev("/dev/VGA_Subsystem_Char_Buf_Subsystem_Char_Buf_DMA");
+
+    if (char_buf_dev == NULL) {
+        printf("Erro: Nao foi possivel abrir o Char Buffer.\n");
+    } else {
+        alt_up_char_buffer_clear(char_buf_dev);
+    }
+
+    printf("VGA Inicializado.\n");
+}
+
+// Função Auxiliar de desenho (Adaptada para Video DMA)
+void draw_pixel(int x, int y, int color) {
+    if (pixel_dma_dev != NULL) {
+        // O Video DMA Controller desenha linhas ou caixas, não pixels individuais diretamente de forma eficiente.
+        // Mas podemos desenhar uma caixa de 1x1.
+        alt_up_video_dma_draw_box(pixel_dma_dev, x, y, x, y, color, 0);
+    }
+}
+
+void draw_line(int x0, int y0, int x1, int y1, int color) {
+     if (pixel_dma_dev != NULL) {
+        alt_up_video_dma_draw_line(pixel_dma_dev, x0, y0, x1, y1, color, 0);
+     }
+}
+
+void update_radar_view(int angle_deg, int distance_cm) {
+    static int old_x = RADAR_CENTER_X;
+    static int old_y = RADAR_CENTER_Y;
+
+    double rad = (double)angle_deg * PI / 180.0;
+    int x_sweep = RADAR_CENTER_X + (int)(MAX_RADIUS * cos(rad));
+    int y_sweep = RADAR_CENTER_Y - (int)(MAX_RADIUS * sin(rad));
+
+    // Apagar linha velha
+    draw_line(RADAR_CENTER_X, RADAR_CENTER_Y, old_x, old_y, COLOR_BLACK);
+
+    // Desenhar linha nova
+    draw_line(RADAR_CENTER_X, RADAR_CENTER_Y, x_sweep, y_sweep, COLOR_GREEN);
+
+    old_x = x_sweep;
+    old_y = y_sweep;
+
+    // Desenhar objeto (se houver)
+    if (distance_cm > 0 && distance_cm < 200) {
+        int dist_px = distance_cm;
+        int x_obj = RADAR_CENTER_X + (int)(dist_px * cos(rad));
+        int y_obj = RADAR_CENTER_Y - (int)(dist_px * sin(rad));
+
+        // Desenha caixa 4x4
+        if (pixel_dma_dev != NULL)
+            alt_up_video_dma_draw_box(pixel_dma_dev, x_obj-2, y_obj-2, x_obj+2, y_obj+2, COLOR_RED, 0);
+    }
+}

@@ -1,0 +1,59 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+-- Controlador de Servomotor PWM
+-- Entradas: Clock 50MHz, Reset, Position (8 bits)
+-- Saída: PWM (Periodo 20ms, High Time 1ms a 2ms)
+entity IP_Servomoteur is
+    port (
+        clk      : in  std_logic;
+        rst_n    : in  std_logic;
+        position : in  std_logic_vector(7 downto 0); -- 0=0 graus, 255=180 graus
+        commande : out std_logic                     -- Sinal PWM
+    );
+end entity IP_Servomoteur;
+
+architecture Behavioral of IP_Servomoteur is
+
+    -- Configuração para Clock 50MHz
+    constant CLK_FREQ       : integer := 50000000;
+    constant PWM_FREQ       : integer := 50; -- 50 Hz (20 ms)
+    constant PERIOD_CYCLES  : integer := CLK_FREQ / PWM_FREQ; -- 1.000.000 ciclos
+
+    -- Largura de Pulso (Conforme especificação teórica)
+    -- 1ms (50k ciclos) a 2ms (100k ciclos)
+    constant MIN_PULSE_CYCLES : integer := 50000;  
+    constant CYCLES_PER_STEP  : integer := 196; -- (100000-50000)/255
+
+    signal pwm_counter : integer range 0 to PERIOD_CYCLES := 0;
+    signal high_time   : integer range 0 to PERIOD_CYCLES := 0;
+
+begin
+
+    -- Calcula a largura do pulso baseada na posição (0..255)
+    high_time <= MIN_PULSE_CYCLES + (to_integer(unsigned(position)) * CYCLES_PER_STEP);
+
+    process(clk, rst_n)
+    begin
+        if rst_n = '0' then
+            pwm_counter <= 0;
+            commande    <= '0';
+        elsif rising_edge(clk) then
+            -- Contador Cíclico de 0 a 1.000.000 (20ms)
+            if pwm_counter < PERIOD_CYCLES - 1 then
+                pwm_counter <= pwm_counter + 1;
+            else
+                pwm_counter <= 0;
+            end if;
+
+            -- Geração do Pulso PWM
+            if pwm_counter < high_time then
+                commande <= '1';
+            else
+                commande <= '0';
+            end if;
+        end if;
+    end process;
+
+end architecture Behavioral;

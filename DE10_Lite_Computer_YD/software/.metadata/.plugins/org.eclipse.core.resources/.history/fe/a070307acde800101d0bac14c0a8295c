@@ -1,0 +1,175 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES VIRTUAIS (Base 320x240)
+// ==========================================
+// Vamos manter a lógica matemática pensando em 320x240.
+// O código ajustará automaticamente se a tela real for menor.
+#define VIRTUAL_WIDTH  320
+#define VIRTUAL_HEIGHT 240
+#define VIRTUAL_CENTER_X 160
+#define VIRTUAL_CENTER_Y 220
+#define RADAR_RADIUS   180
+#define MIN_DISTANCE   4
+#define PI             3.14159265
+
+// Cores
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+
+// Endereços de Hardware (importantes para ler a resolução)
+#define PIXEL_BUF_CTRL_BASE VGA_SUBSYSTEM_VGA_PIXEL_DMA_BASE
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+alt_up_video_dma_dev *pixel_dma_dev;
+
+// Fator de escala (será 1 para 320x240 ou 2 para 160x120)
+int scale_factor = 1;
+int screen_width_real = 320;
+int screen_height_real = 240;
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+void vga_clear_text() {
+    int offset;
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' ');
+    }
+}
+
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+// Wrapper inteligente para desenhar pixel
+// Recebe coordenadas VIRTUAIS (0-320) e converte para REAIS
+void draw_pixel(int x, int y, int color) {
+    // 1. Aplica a escala (igual ao radar.c: x / x_factor)
+    int real_x = x / scale_factor;
+    int real_y = y / scale_factor;
+
+    // 2. Proteção de bordas REAIS
+    if (real_x < 0 || real_x >= screen_width_real ||
+        real_y < 0 || real_y >= screen_height_real) return;
+
+    // 3. Desenha usando o driver
+    alt_up_video_dma_draw_box(pixel_dma_dev, color, real_x, real_y, real_x, real_y, 0, 1);
+}
+
+// ==========================================
+// LÓGICA DO RADAR (Cópia do radar.c com adaptação de pixel)
+// ==========================================
+
+void draw_line_segment(int x_start, int y_start, int x_end, int y_end, int color) {
+    // Calcula passos baseado na distância virtual
+    int steps = (int)sqrt(pow(x_end - x_start, 2) + pow(y_end - y_start, 2));
+    if (steps == 0) return;
+
+    for(int i = 0; i <= steps; i++) {
+        // Interpolação na escala VIRTUAL (preserva precisão)
+        int x = x_start + (x_end - x_start) * i / steps;
+        int y = y_start + (y_end - y_start) * i / steps;
+
+        // A função draw_pixel cuidará de reduzir para a resolução real
+        draw_pixel(x, y, color);
+    }
+}
+
+void init_vga() {
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+    if (pixel_dma_dev == NULL) {
+        printf("ERRO: VGA Pixel DMA nao encontrado.\n");
+        return;
+    }
+
+    // --- AUTO-DETECÇÃO DE RESOLUÇÃO (Igual ao demo.c) ---
+    // Lê o registro de controle do buffer de pixels
+    volatile int *video_resolution = (int *)(PIXEL_BUF_CTRL_BASE + 0x8);
+    screen_width_real = *video_resolution & 0xFFFF;
+    screen_height_real = (*video_resolution >> 16) & 0xFFFF;
+
+    // Se a largura for 160, ativamos o fator de escala 2
+    if (screen_width_real == 160) {
+        scale_factor = 2;
+        printf("Modo Baixa Resolucao (160x120) detectado. Escala ativada.\n");
+    } else {
+        scale_factor = 1;
+        printf("Modo Alta Resolucao (320x240) detectado.\n");
+    }
+
+    alt_up_video_dma_screen_clear(pixel_dma_dev, 0);
+    vga_clear_text();
+
+    // Desenha borda (usando coordenadas virtuais 320x240)
+    for(int angle = 0; angle <= 180; angle++) {
+        double rad = angle * PI / 180.0;
+        // Lógica original: CENTER - cos
+        int x = VIRTUAL_CENTER_X - (int)(cos(rad) * RADAR_RADIUS);
+        int y = VIRTUAL_CENTER_Y - (int)(sin(rad) * RADAR_RADIUS);
+        draw_pixel(x, y, COLOR_WHITE);
+    }
+
+    vga_write_text(25, 1, "RADAR ULTRASSONICO"); // Centralizado aprox.
+    vga_write_text(2, 57, "Dist: ");
+    vga_write_text(2, 58, "Ang : ");
+}
+
+void update_radar_view(int angle, int distance) {
+    if (pixel_dma_dev == NULL) return;
+
+    static int last_angle = -1;
+    static int last_dist = -1;
+    char buf[30];
+
+    // 1. LIMPAR (Preto)
+    if (last_angle != -1) {
+        double rad = last_angle * PI / 180.0;
+        int end_x = VIRTUAL_CENTER_X - (int)(cos(rad) * RADAR_RADIUS);
+        int end_y = VIRTUAL_CENTER_Y - (int)(sin(rad) * RADAR_RADIUS);
+        draw_line_segment(VIRTUAL_CENTER_X, VIRTUAL_CENTER_Y, end_x, end_y, COLOR_BLACK);
+    }
+    last_angle = angle;
+
+    // 2. DESENHAR (Verde/Vermelho)
+    if(distance < MIN_DISTANCE) distance = MIN_DISTANCE;
+    if(distance > RADAR_RADIUS) distance = RADAR_RADIUS;
+
+    double rad = angle * PI / 180.0;
+
+    int obj_x = VIRTUAL_CENTER_X - (int)(cos(rad) * distance);
+    int obj_y = VIRTUAL_CENTER_Y - (int)(sin(rad) * distance);
+
+    int max_x = VIRTUAL_CENTER_X - (int)(cos(rad) * RADAR_RADIUS);
+    int max_y = VIRTUAL_CENTER_Y - (int)(sin(rad) * RADAR_RADIUS);
+
+    // Linha Verde (Centro -> Objeto)
+    draw_line_segment(VIRTUAL_CENTER_X, VIRTUAL_CENTER_Y, obj_x, obj_y, COLOR_GREEN);
+
+    // Linha Vermelha (Objeto -> Final)
+    draw_line_segment(obj_x, obj_y, max_x, max_y, COLOR_RED);
+
+    // 3. TEXTO
+    if (last_dist != distance) {
+        if (distance >= RADAR_RADIUS) sprintf(buf, "--- cm   ");
+        else sprintf(buf, "%3d cm   ", distance);
+        vga_write_text(8, 57, buf);
+        last_dist = distance;
+    }
+    sprintf(buf, "%3d deg  ", angle);
+    vga_write_text(8, 58, buf);
+}

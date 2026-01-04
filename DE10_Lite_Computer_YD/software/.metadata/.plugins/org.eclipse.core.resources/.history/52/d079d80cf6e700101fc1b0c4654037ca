@@ -1,0 +1,168 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <math.h>
+#include <stdlib.h>
+#include "io.h"
+#include "system.h"
+
+// ============================================================================
+// CONFIGURAÇÃO MANUAL DO HARDWARE (Bypassing drivers)
+// ============================================================================
+
+// Endereço do CONTROLADOR DE VÍDEO (Visto na sua imagem do Platform Designer)
+// Corresponde ao 'pixel_dma_control_slave'
+#define PIXEL_DMA_BASE 0xFF203020
+
+// Endereço da memória onde desenhamos (SDRAM padrão da DE10-Lite)
+#define VGA_MEMORY_BASE 0xC0000000
+
+// Endereços dos seus outros periféricos
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+// Definição de Cores (16-bit RGB 565)
+#define WHITE 0xFFFF
+#define BLACK 0x0000
+#define GREEN 0x07E0
+#define RED   0xF800
+
+// ============================================================================
+// FUNÇÕES GRÁFICAS (Escrevem direto na memória)
+// ============================================================================
+
+// Plota um pixel diretamente na memória de vídeo
+void plot_pixel(int x, int y, short color) {
+    if (x < 0 || x >= 320 || y < 0 || y >= 240) return;
+
+    // Calcula o endereço do pixel: Base + (y * 320 + x) * 2 bytes
+    int offset = (y * 320 + x) * 2;
+    IOWR_16DIRECT(VGA_MEMORY_BASE, offset, color);
+}
+
+// Inicializa o controlador VGA escrevendo nos registros diretamente
+void init_vga_manual() {
+    alt_putstr("Inicializando VGA (Modo Manual)...\n");
+
+    // 1. Define o endereço do Buffer (Onde o VGA vai ler a imagem)
+    // Escreve o endereço 0xC0000000 no registrador de "Back Buffer" (Offset 4)
+    IOWR_32DIRECT(PIXEL_DMA_BASE, 4, VGA_MEMORY_BASE);
+
+    // 2. Define a resolução (320x240)
+    // Formato: (Altura << 16) | Largura -> Registrador de Resolução (Offset 8)
+    IOWR_32DIRECT(PIXEL_DMA_BASE, 8, (240 << 16) | 320);
+
+    // 3. Ativa o Controlador DMA
+    // Registrador de Status (Offset 12): Bit 2 = Reset, Bit 0 = Start
+    IOWR_32DIRECT(PIXEL_DMA_BASE, 12, 0x4); // Reseta o DMA
+    IOWR_32DIRECT(PIXEL_DMA_BASE, 12, 0x1); // Inicia o DMA
+
+    // 4. Troca de Buffer (Swap) para validar o novo endereço
+    // Escreve no Registrador de Buffer (Offset 0)
+    IOWR_32DIRECT(PIXEL_DMA_BASE, 0, 1);
+
+    // Limpa a tela (pinta de preto)
+    for(int i = 0; i < (320 * 240); i++) {
+        IOWR_16DIRECT(VGA_MEMORY_BASE, i*2, BLACK);
+    }
+
+    alt_putstr("VGA Pronto!\n");
+}
+
+// Desenha linha (Bresenham)
+void draw_line(int x0, int y0, int x1, int y1, short color) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+    while (1) {
+        plot_pixel(x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
+
+// ============================================================================
+// MAIN - LOOP DO RADAR
+// ============================================================================
+
+#define HARDWARE_MIN  60
+#define HARDWARE_MAX  200
+#define PI 3.14159265
+#define CENTER_X 160
+#define CENTER_Y 239
+
+// Mapeia 0-255 para o ângulo do servo
+int map_range(int x) {
+    return HARDWARE_MIN + (x * (HARDWARE_MAX - HARDWARE_MIN) / 255);
+}
+
+int main()
+{
+    // 1. Inicializa o Vídeo
+    init_vga_manual();
+
+    // Desenha bordas brancas para confirmar funcionamento
+    draw_line(0, 0, 319, 0, WHITE);
+    draw_line(0, 0, 0, 239, WHITE);
+    draw_line(319, 0, 319, 239, WHITE);
+
+    int pos_virtual = 0;
+    int direcao = 1;
+    int prev_x = CENTER_X, prev_y = CENTER_Y;
+
+    while (1)
+    {
+        // A. Apaga a linha antiga (desenha preto em cima da anterior)
+        draw_line(CENTER_X, CENTER_Y, prev_x, prev_y, BLACK);
+
+        // B. Move Servo
+        int pos_fisica = map_range(pos_virtual);
+        IOWR(SERVO_BASE, 0, pos_fisica);
+        usleep(15000); // Espera o servo chegar (15ms)
+
+        // C. Lê Sensor Ultrassom
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+        int dist_cm = radar_data & 0x3FF; // Pega os 10 bits de dados
+
+        // Limita visualmente a 100cm para caber na tela
+        if (dist_cm > 100) dist_cm = 100;
+
+        // D. Cálculos Trigonométricos
+        float angulo_rad = ((float)pos_virtual / 255.0) * PI;
+
+        // Coordenadas da linha de varredura (Verde)
+        int scan_len = 200;
+        int scan_x = CENTER_X - (int)(scan_len * cos(angulo_rad));
+        int scan_y = CENTER_Y - (int)(scan_len * sin(angulo_rad));
+
+        // Coordenadas do Obstáculo (Vermelho)
+        // Multiplica por 2 para "zoom" (1cm = 2 pixels)
+        int obst_x = CENTER_X - (int)(dist_cm * 2.0 * cos(angulo_rad));
+        int obst_y = CENTER_Y - (int)(dist_cm * 2.0 * sin(angulo_rad));
+
+        // E. Desenha Nova Linha (Verde)
+        draw_line(CENTER_X, CENTER_Y, scan_x, scan_y, GREEN);
+
+        // F. Desenha Obstáculo (Se for válido)
+        if (dist_cm < 95 && dist_cm > 4) {
+            // Desenha ponto grosso vermelho
+            plot_pixel(obst_x, obst_y, RED);
+            plot_pixel(obst_x+1, obst_y, RED);
+            plot_pixel(obst_x, obst_y+1, RED);
+            plot_pixel(obst_x+1, obst_y+1, RED);
+        }
+
+        // Salva posição para apagar na próxima iteração
+        prev_x = scan_x;
+        prev_y = scan_y;
+
+        // Atualiza ângulo do radar
+        pos_virtual += direcao * 3; // Velocidade 3
+        if (pos_virtual >= 255) direcao = -1;
+        else if (pos_virtual <= 0) direcao = 1;
+    }
+
+    return 0;
+}

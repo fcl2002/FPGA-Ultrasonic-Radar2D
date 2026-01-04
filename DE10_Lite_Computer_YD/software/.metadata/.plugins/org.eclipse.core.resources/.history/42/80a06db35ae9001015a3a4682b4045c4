@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <unistd.h>
+#include "system.h"
+#include "io.h"
+
+// Protótipos
+void init_vga();
+void update_radar_view(int angle, int distance_cm);
+
+// --- CONFIGURAÇÃO DE VELOCIDADE ---
+// Passo do ângulo: aumentei para 5 graus como pedido (era 1 ou 2)
+#define SPEED_STEP 3
+// Delay entre movimentos: reduzido para o motor andar mais rápido
+#define DELAY_SPEED 40000
+
+int main() {
+    printf("Iniciando Radar ...\n");
+
+    // Inicializa VGA
+    init_vga();
+
+    int angle = 0;
+    int direction = 1; // 1 = sobe, -1 = desce
+    int distance = 0;
+
+    // Ponteiros para periféricos (IP Cores)
+    void* servo_base = (void*) IP_SERVO_AVALON_0_BASE;
+    void* telemetre_base = (void*) TELEMETRE_US_AVALON_0_BASE;
+
+    while(1) {
+        // 1. Mover Servo
+        IOWR_32DIRECT(servo_base, 0, angle);
+
+        // 2. Ler Distância
+        distance = IORD_32DIRECT(telemetre_base, 0);
+
+        // 3. Atualizar VGA
+        update_radar_view(angle, distance);
+
+        // 4. Atualizar Ângulo (Lógica de Varredura Rápida)
+        // Multiplica a direção pelo passo (5 graus por vez)
+        angle += (direction * SPEED_STEP);
+
+        // Verificar limites
+        if (angle >= 180) {
+            angle = 180;
+            direction = -1; // Inverte para descer
+        }
+        else if (angle <= 0) {
+            angle = 0;
+            direction = 1;  // Inverte para subir
+        }
+
+        // Pequeno atraso para estabilidade mecânica
+        usleep(DELAY_SPEED);
+    }
+
+    return 0;
+}

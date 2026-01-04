@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <unistd.h>      // Para usleep()
+#include "system.h"      // Endereços do Qsys
+#include "io.h"          // Comandos de Leitura/Escrita (IORD, IOWR)
+
+// ==========================================
+// PROTÓTIPOS DAS FUNÇÕES VGA
+// ==========================================
+// (Como não criamos um vga_controle.h, declaramos aqui para o main saber que existem)
+void init_vga();
+void update_radar_view(int angle_deg, int distance_cm);
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+#define DELAY_SPEED 20000 // Velocidade do radar (em microssegundos). Menor = mais rápido.
+
+int main() {
+    printf("Iniciando Sistema de Radar 2D...\n");
+
+    // 1. Inicializar a Tela VGA
+    init_vga();
+
+    // Variáveis de controle
+    int angle = 0;          // Ângulo atual do servo (0 a 180)
+    int direction = 1;      // 1 = direita, -1 = esquerda
+    int distance = 0;       // Distância lida do sensor
+    int radar_active = 1;   // Estado do radar
+
+    // Endereços dos periféricos (baseados no seu system.h)
+    // Se der erro, verifique se os nomes batem com o system.h
+    void* servo_base = (void*) IP_SERVO_AVALON_0_BASE;
+    void* telemetre_base = (void*) TELEMETRE_US_AVALON_0_BASE;
+    void* switches_base = (void*) SLIDER_SWITCHES_BASE;
+
+    // Loop Infinito
+    while(1) {
+
+        // Leitura do Switch 0 para Pausar/Continuar
+        // Se o SW0 estiver em baixo (0), o radar pausa.
+        int sw_val = IORD_32DIRECT(switches_base, 0);
+        if ((sw_val & 0x01) == 0) {
+            usleep(100000);
+            continue; // Volta para o início do while
+        }
+
+        // ----------------------------------------
+        // 1. Mover o Servo Motor
+        // ----------------------------------------
+        // Escreve o ângulo no registrador do IP do Servo
+        // (Assumindo que o seu IP recebe o ângulo diretamente no offset 0)
+        IOWR_32DIRECT(servo_base, 0, angle);
+
+        // ----------------------------------------
+        // 2. Ler o Sensor Ultrassônico (Telêmetro)
+        // ----------------------------------------
+        // Lê a distância do registrador do IP do Telêmetro
+        // (Assumindo que o IP retorna a distância em cm no offset 0)
+        distance = IORD_32DIRECT(telemetre_base, 0);
+
+        // Debug no console do Eclipse (JTAG UART) - Opcional, pode deixar lento
+        // printf("Ang: %d | Dist: %d cm\n", angle, distance);
+
+        // ----------------------------------------
+        // 3. Atualizar a Interface Gráfica (VGA)
+        // ----------------------------------------
+        update_radar_view(angle, distance);
+
+        // ----------------------------------------
+        // 4. Lógica de Varredura
+        // ----------------------------------------
+        angle += direction;
+
+        // Verifica os limites (0 a 180 graus)
+        if (angle >= 180) {
+            angle = 180;
+            direction = -1; // Inverte para esquerda
+        } else if (angle <= 0) {
+            angle = 0;
+            direction = 1;  // Inverte para direita
+        }
+
+        // Atraso para permitir que o motor se mova fisicamente
+        usleep(DELAY_SPEED);
+    }
+
+    return 0;
+}

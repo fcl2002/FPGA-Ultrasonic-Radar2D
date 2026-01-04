@@ -1,0 +1,191 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+// Ajuste de Geometria
+#define SCREEN_WIDTH  320
+#define SCREEN_HEIGHT 240
+
+// Subi o centro (Y=200) para garantir que apareça na tela
+#define CENTER_X      160
+#define CENTER_Y      200
+#define MAX_RADIUS    180
+#define PI            3.14159265
+
+// Cores (RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+
+// Variável global do driver
+alt_up_video_dma_dev *pixel_dma_dev;
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+void vga_clear_text() {
+    int offset;
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' ');
+    }
+}
+
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+// Calcula X com proteção de borda
+int get_x(int angle, int radius) {
+    // cos retorna valor entre -1 e 1
+    double rad = angle * PI / 180.0;
+    int x = CENTER_X + (int)(radius * cos(rad));
+
+    // Proteção para não desenhar fora da memória
+    if(x < 0) x = 0;
+    if(x >= SCREEN_WIDTH) x = SCREEN_WIDTH - 1;
+    return x;
+}
+
+// Calcula Y com proteção de borda
+int get_y(int angle, int radius) {
+    // sin retorna valor entre -1 e 1 (Y cresce para baixo, por isso o menos)
+    double rad = angle * PI / 180.0;
+    int y = CENTER_Y - (int)(radius * sin(rad));
+
+    if(y < 0) y = 0;
+    if(y >= SCREEN_HEIGHT) y = SCREEN_HEIGHT - 1;
+    return y;
+}
+
+// ==========================================
+// FUNÇÕES PRINCIPAIS
+// ==========================================
+
+void init_vga() {
+    // Tenta abrir o dispositivo DMA
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+    if (pixel_dma_dev == NULL) {
+        printf("[ERRO] VGA Pixel DMA nao encontrado.\n");
+        return;
+    }
+
+    // 1. Limpa a tela inteira (fundo preto)
+    alt_up_video_dma_screen_clear(pixel_dma_dev, 0);
+
+    // 2. Desenha o arco de borda (usando linhas curtas para formar o arco)
+    // Isso é mais rápido e visível que desenhar pontos
+    int prev_x = get_x(0, MAX_RADIUS);
+    int prev_y = get_y(0, MAX_RADIUS);
+
+    for(int a = 5; a <= 180; a += 5) {
+        int curr_x = get_x(a, MAX_RADIUS);
+        int curr_y = get_y(a, MAX_RADIUS);
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_WHITE, prev_x, prev_y, curr_x, curr_y, 0);
+        prev_x = curr_x;
+        prev_y = curr_y;
+    }
+
+    // 3. Textos Iniciais
+    vga_clear_text();
+    vga_write_text(30, 2, "RADAR ULTRASSONICO");
+    vga_write_text(2, 50, "Dist: ");
+    vga_write_text(2, 52, "Ang : ");
+}
+
+void update_radar_view(int angle, int distance_cm) {
+    if (pixel_dma_dev == NULL) return;
+
+    static int last_angle = -1;
+    static int last_dist_val = -1;
+    char buf[32];
+
+    // ============================================
+    // 1. APAGAR A LINHA ANTERIOR (Varredura)
+    // ============================================
+    if (last_angle != -1) {
+        // Apaga desenhando uma linha PRETA do centro até o raio máximo
+        // Usamos as mesmas coordenadas usadas para desenhar
+        int old_x = get_x(last_angle, MAX_RADIUS);
+        int old_y = get_y(last_angle, MAX_RADIUS);
+
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_BLACK,
+                                   CENTER_X, CENTER_Y,
+                                   old_x, old_y, 0);
+    }
+
+    // Atualiza o ângulo antigo para o próximo ciclo
+    last_angle = angle;
+
+    // ============================================
+    // 2. CÁLCULO DE COORDENADAS ATUAIS
+    // ============================================
+
+    // Limita a distância visual ao tamanho do radar
+    int visual_dist = distance_cm;
+    if (visual_dist > MAX_RADIUS) visual_dist = MAX_RADIUS;
+    if (visual_dist < 0) visual_dist = MAX_RADIUS;
+
+    // Coordenada do Objeto
+    int x_obj = get_x(angle, visual_dist);
+    int y_obj = get_y(angle, visual_dist);
+
+    // Coordenada da Borda (Raio Máximo)
+    int x_max = get_x(angle, MAX_RADIUS);
+    int y_max = get_y(angle, MAX_RADIUS);
+
+    // ============================================
+    // 3. DESENHO DAS LINHAS (VERDE E VERMELHA)
+    // ============================================
+
+    // Linha VERDE: Do Centro até o Objeto
+    // Só desenha se o objeto estiver longe o suficiente do centro
+    if (visual_dist > 2) {
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_GREEN,
+                                   CENTER_X, CENTER_Y,
+                                   x_obj, y_obj, 0);
+    }
+
+    // Linha VERMELHA: Do Objeto até a Borda
+    // Só desenha se houver espaço entre o objeto e a borda
+    if (visual_dist < MAX_RADIUS) {
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_RED,
+                                   x_obj, y_obj,
+                                   x_max, y_max, 0);
+    }
+
+    // ============================================
+    // 4. ATUALIZAR TEXTO
+    // ============================================
+
+    // Atualiza apenas se o valor mudou para evitar "flicker"
+    // Os espaços "   " no final garantem que o número anterior seja apagado
+    if (last_dist_val != distance_cm) {
+        if (distance_cm > 400 || distance_cm < 0)
+            sprintf(buf, "--- cm    ");
+        else
+            sprintf(buf, "%3d cm    ", distance_cm);
+
+        vga_write_text(8, 50, buf); // Y=50 (mais alto que antes)
+        last_dist_val = distance_cm;
+    }
+
+    // Sempre atualiza o ângulo
+    sprintf(buf, "%3d deg   ", angle);
+    vga_write_text(8, 52, buf); // Y=52
+}

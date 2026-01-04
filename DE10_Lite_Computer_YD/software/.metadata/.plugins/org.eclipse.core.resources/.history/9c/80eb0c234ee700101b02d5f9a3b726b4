@@ -1,0 +1,68 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// Seus nomes
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+// --- CALIBRAÇÃO DE SEGURANÇA ---
+// O hardware aceita 0 (0.5ms) a 255 (2.5ms).
+// Mas seu servo só aguenta 1.0ms a 2.0ms.
+// Vamos definir os limites "Reais" dentro da escala de 0-255.
+#define HARDWARE_MIN  60   // ~1.0 ms (Valor seguro para o inicio)
+#define HARDWARE_MAX  200  // ~2.1 ms (Valor seguro para o fim)
+
+// Função que traduz "0 a 255" para "60 a 200"
+int map_range(int x) {
+    // Matematica simples de regra de 3
+    // Entrada: 0 a 255
+    // Saida: HARDWARE_MIN a HARDWARE_MAX
+    return HARDWARE_MIN + (x * (HARDWARE_MAX - HARDWARE_MIN) / 255);
+}
+
+int main()
+{
+    alt_putstr("=== RADAR CALIBRADO (ANTI-TRAVAMENTO) ===\n");
+    alt_putstr("Agora 0 e o minimo SEGURO e 255 e o maximo SEGURO.\n");
+
+    int pos_virtual = 0;
+    int direcao = 1;
+    int pos_fisica = 0;
+
+    while (1)
+    {
+        // 1. Converte a posição lógica (0-255) para a física (60-200)
+        pos_fisica = map_range(pos_virtual);
+
+        // 2. Mover o Servo com o valor seguro
+        IOWR(SERVO_BASE, 0, pos_fisica);
+        usleep(30000); // 30ms
+
+        // 3. Ler Sensor
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+        int raw_cycles = radar_data >> 10;
+        int dist_cm = (int)((float)raw_cycles * 0.00017); // Use 0.00034 se 50MHz
+
+        // 4. Imprimir (Mostra a posicao virtual pro usuario nao se confundir)
+        // Se a dist for > 400 (erro), cortamos para ficar bonito no grafico
+        if (dist_cm > 400) dist_cm = 400;
+
+        printf("%d, %d\n", pos_virtual, dist_cm);
+
+        // 5. Varredura Lógica (0 a 255)
+        pos_virtual += direcao * 5; // Pula de 5 em 5 para ser mais rapido
+
+        if (pos_virtual >= 255) {
+            direcao = -1;
+            // alt_putstr("<- Voltando\n");
+        } else if (pos_virtual <= 0) {
+            direcao = 1;
+            // alt_putstr("-> Indo\n");
+        }
+    }
+
+    return 0;
+}

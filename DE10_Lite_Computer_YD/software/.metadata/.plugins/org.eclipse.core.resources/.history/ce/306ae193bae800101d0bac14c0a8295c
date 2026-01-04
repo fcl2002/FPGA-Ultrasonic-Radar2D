@@ -1,0 +1,134 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include "system.h"
+#include "altera_up_avalon_video_pixel_buffer_dma.h"
+#include "altera_up_avalon_video_character_buffer_dma.h"
+
+// Definições da Tela (Padrão DE10-Lite: 320x240)
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+#define RADAR_CENTER_X 160
+#define RADAR_CENTER_Y 239  // Radar na parte inferior central
+#define MAX_RADIUS 220      // Raio máximo do radar na tela
+#define PI 3.14159265
+
+// Cores (Formato 16-bit RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+#define COLOR_BLUE  0x001F
+
+// Variáveis Globais para os Dispositivos
+alt_up_pixel_buffer_dma_dev *pixel_buf_dev;
+alt_up_char_buffer_dev *char_buf_dev;
+
+// Função para Inicializar o VGA
+void init_vga() {
+    // Abrir o dispositivo de Pixel Buffer
+    // O nome "/dev/..." deve corresponder ao definido no seu system.h
+    // Geralmente é "/dev/VGA_Subsystem_VGA_Pixel_DMA" ou similar
+    pixel_buf_dev = alt_up_pixel_buffer_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+
+    if (pixel_buf_dev == NULL) {
+        printf("Erro: Nao foi possivel abrir o dispositivo Pixel Buffer.\n");
+        return;
+    }
+
+    // Abrir o dispositivo de Character Buffer (Texto)
+    char_buf_dev = alt_up_char_buffer_open_dev("/dev/VGA_Subsystem_Char_Buf_Subsystem_Char_Buf_DMA");
+
+    if (char_buf_dev == NULL) {
+        printf("Erro: Nao foi possivel abrir o dispositivo Char Buffer.\n");
+        return;
+    }
+
+    // Limpar a tela
+    alt_up_pixel_buffer_dma_clear_screen(pixel_buf_dev, 0);
+    alt_up_char_buffer_clear(char_buf_dev);
+
+    printf("VGA Inicializado com sucesso.\n");
+}
+
+// Função Auxiliar para desenhar semicírculos (interface do radar)
+void draw_semicircle(int x0, int y0, int radius, int color) {
+    int x = radius;
+    int y = 0;
+    int err = 0;
+
+    while (x >= y) {
+        // Desenha apenas a metade superior (ou inferior dependendo da orientação Y)
+        // Aqui desenhamos acima do centro Y (y0 - y)
+        alt_up_pixel_buffer_dma_draw(pixel_buf_dev, color, x0 + x, y0 - y);
+        alt_up_pixel_buffer_dma_draw(pixel_buf_dev, color, x0 + y, y0 - x);
+        alt_up_pixel_buffer_dma_draw(pixel_buf_dev, color, x0 - y, y0 - x);
+        alt_up_pixel_buffer_dma_draw(pixel_buf_dev, color, x0 - x, y0 - y);
+
+        if (err <= 0) {
+            y += 1;
+            err += 2 * y + 1;
+        }
+        if (err > 0) {
+            x -= 1;
+            err -= 2 * x + 1;
+        }
+    }
+}
+
+// Desenha a grade estática do Radar
+void draw_radar_interface() {
+    alt_up_pixel_buffer_dma_clear_screen(pixel_buf_dev, 0);
+    alt_up_char_buffer_clear(char_buf_dev);
+
+    // Desenha arcos de distância (ex: 50cm, 100cm, 150cm)
+    draw_semicircle(RADAR_CENTER_X, RADAR_CENTER_Y, 50, COLOR_WHITE);
+    draw_semicircle(RADAR_CENTER_X, RADAR_CENTER_Y, 100, COLOR_WHITE);
+    draw_semicircle(RADAR_CENTER_X, RADAR_CENTER_Y, 150, COLOR_WHITE);
+    draw_semicircle(RADAR_CENTER_X, RADAR_CENTER_Y, 200, COLOR_WHITE);
+
+    // Escreve texto na tela
+    alt_up_char_buffer_string(char_buf_dev, "RADAR 2D - SISTEMA DE10-LITE", 25, 2);
+    alt_up_char_buffer_string(char_buf_dev, "50cm", 42, 50);
+    alt_up_char_buffer_string(char_buf_dev, "100cm", 42, 38);
+    alt_up_char_buffer_string(char_buf_dev, "150cm", 42, 26);
+}
+
+// Atualiza a linha de varredura e objetos detectados
+// Chame esta função dentro do seu loop principal do Servo/Ultrassom
+void update_radar_view(int angle_deg, int distance_cm) {
+    static int old_x = RADAR_CENTER_X;
+    static int old_y = RADAR_CENTER_Y;
+
+    // Converter ângulo para radianos (ajuste conforme seu servo: 0 a 180 graus)
+    // Assumindo 0 graus na direita e 180 na esquerda
+    double rad = (double)angle_deg * PI / 180.0;
+
+    // Calcular coordenadas da ponta da linha de varredura (Sweep)
+    int x_sweep = RADAR_CENTER_X + (int)(MAX_RADIUS * cos(rad));
+    int y_sweep = RADAR_CENTER_Y - (int)(MAX_RADIUS * sin(rad));
+
+    // 1. Apagar a linha anterior (desenhando preto sobre ela)
+    // Nota: Isso é simples; para evitar apagar a grade, redesenhe a grade ou use buffer duplo
+    alt_up_pixel_buffer_dma_draw_line(pixel_buf_dev, RADAR_CENTER_X, RADAR_CENTER_Y, old_x, old_y, COLOR_BLACK, 0);
+
+    // 2. Desenhar a nova linha de varredura (Verde)
+    alt_up_pixel_buffer_dma_draw_line(pixel_buf_dev, RADAR_CENTER_X, RADAR_CENTER_Y, x_sweep, y_sweep, COLOR_GREEN, 0);
+
+    // Atualizar posição anterior para apagar na próxima iteração
+    old_x = x_sweep;
+    old_y = y_sweep;
+
+    // 3. Desenhar objeto se estiver dentro do alcance (Vermelho)
+    if (distance_cm > 0 && distance_cm < 200) { // Exemplo: limite de 200cm
+        // Mapear distância (cm) para pixels
+        // Assumindo que 200cm = MAX_RADIUS pixels (ex: 200px)
+        int dist_px = distance_cm;
+
+        int x_obj = RADAR_CENTER_X + (int)(dist_px * cos(rad));
+        int y_obj = RADAR_CENTER_Y - (int)(dist_px * sin(rad));
+
+        // Desenha um pequeno quadrado ou ponto para o objeto
+        alt_up_pixel_buffer_dma_draw_box(pixel_buf_dev, x_obj-2, y_obj-2, x_obj+2, y_obj+2, COLOR_RED, 0);
+    }
+}

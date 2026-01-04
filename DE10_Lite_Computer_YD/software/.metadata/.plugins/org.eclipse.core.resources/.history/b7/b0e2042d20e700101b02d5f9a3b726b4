@@ -1,0 +1,49 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// --- CONFIGURAÇÕES ---
+// Garanta que os nomes batem com o seu system.h
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+// Ajuste para 100MHz (0.00017) ou 50MHz (0.00034)
+#define FATOR_CONVERSAO 0.00017
+
+int main()
+{
+    alt_putstr("=== INICIANDO MODO RADAR AUTOMATICO ===\n");
+
+    int pos = 20; // Começa um pouco afastado do limite 0
+        int direcao = 1;
+
+        while (1)
+        {
+            // 1. Mover Servo
+            IOWR(SERVO_BASE, 0, pos);
+            usleep(30000); // 30ms
+
+            // 2. Ler Radar e Imprimir
+            alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+            int raw_cycles = radar_data >> 10;
+            int dist_cm = (int)((float)raw_cycles * FATOR_CONVERSAO);
+
+            printf("%d, %d\n", pos, dist_cm);
+
+            // 3. Atualizar Posição com MARGEM DE SEGURANÇA
+            pos = pos + direcao;
+
+            // Se chegar perto do máximo (evita o 255 que trava)
+            if (pos >= 230) {
+                direcao = -1; // Inverte para voltar
+            }
+            // Se chegar perto do mínimo (evita o 0 que trava)
+            else if (pos <= 20) {
+                direcao = 1;  // Inverte para ir
+            }
+        }
+
+    return 0;
+}

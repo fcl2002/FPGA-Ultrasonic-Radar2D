@@ -1,0 +1,150 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+
+// Inclui o driver correto para o Pixel DMA (Gráficos)
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES DE HARDWARE
+// ==========================================
+
+// Endereço base da memória de texto (Pego do seu system.h)
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+// Dimensões da tela do DE10-Lite
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+#define RADAR_CENTER_X 160
+#define RADAR_CENTER_Y 239
+#define MAX_RADIUS 220
+#define PI 3.14159265
+
+// Cores (RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+#define COLOR_BLUE  0x001F
+
+// Variável global para o dispositivo de vídeo
+alt_up_video_dma_dev *pixel_dma_dev;
+
+// ==========================================
+// FUNÇÕES DE TEXTO (MANUAL)
+// ==========================================
+// Como a biblioteca de char buffer falhou, escrevemos direto na memória.
+// O buffer de caracteres organiza as linhas a cada 128 bytes (shift << 7).
+
+void vga_clear_text() {
+    int x, y;
+    for (y = 0; y < 60; y++) {
+        for (x = 0; x < 80; x++) {
+            // Endereço = Base + (y * 128) + x
+            unsigned int offset = (y << 7) + x;
+            IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' '); // Escreve espaço vazio
+        }
+    }
+}
+
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+// ==========================================
+// FUNÇÕES DO RADAR
+// ==========================================
+
+void init_vga() {
+    // 1. Inicializar Pixel DMA (Gráficos)
+    // O nome "/dev/VGA_Subsystem_VGA_Pixel_DMA" vem do seu system.h
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+
+    if (pixel_dma_dev == NULL) {
+        printf("ERRO: Nao foi possivel abrir o dispositivo VGA Pixel DMA.\n");
+    } else {
+        // Configura o DMA (endereço do buffer de pixels e back buffer)
+        // No seu hardware, os endereços geralmente são fixos, mas é bom garantir.
+        alt_up_video_dma_screen_clear(pixel_dma_dev, 0); // Limpa a tela (Preto)
+
+        // Desenha a estrutura estática do radar (Linhas brancas)
+        // Linha central vertical
+        alt_up_video_dma_draw_line(pixel_dma_dev, RADAR_CENTER_X, RADAR_CENTER_Y, RADAR_CENTER_X, 20, COLOR_WHITE, 0);
+        // Linha horizontal inferior
+        alt_up_video_dma_draw_line(pixel_dma_dev, 10, RADAR_CENTER_Y, 310, RADAR_CENTER_Y, COLOR_WHITE, 0);
+    }
+
+    // 2. Inicializar Texto
+    vga_clear_text();
+    vga_write_text(32, 2, "RADAR ULTRASSONICO");
+    vga_write_text(32, 3, "DE10-Lite Project");
+    vga_write_text(2, 55, "Distancia:");
+    vga_write_text(2, 57, "Angulo   :");
+
+    printf("VGA Inicializado.\n");
+}
+
+void update_radar_view(int angle_deg, int distance_cm) {
+    static int old_x = RADAR_CENTER_X;
+    static int old_y = RADAR_CENTER_Y;
+    static int last_dist = -1;
+    static int last_ang = -1;
+    char buf[20];
+
+    // Se o driver gráfico não carregou, sai da função
+    if (pixel_dma_dev == NULL) return;
+
+    // --- 1. Atualizar Gráficos (Varredura) ---
+
+    // Converte ângulo para radianos (0 a 180 graus)
+    double rad = (double)angle_deg * PI / 180.0;
+
+    // Calcula a ponta da linha de varredura
+    int x_sweep = RADAR_CENTER_X + (int)(MAX_RADIUS * cos(rad)); // cosseno para eixo X
+    int y_sweep = RADAR_CENTER_Y - (int)(MAX_RADIUS * sin(rad)); // seno negativo para subir (Y cresce para baixo)
+
+    // Apagar a linha antiga (desenhando preto em cima)
+    alt_up_video_dma_draw_line(pixel_dma_dev, RADAR_CENTER_X, RADAR_CENTER_Y, old_x, old_y, COLOR_BLACK, 0);
+
+    // Desenhar a nova linha de varredura (Verde)
+    alt_up_video_dma_draw_line(pixel_dma_dev, RADAR_CENTER_X, RADAR_CENTER_Y, x_sweep, y_sweep, COLOR_GREEN, 0);
+
+    // Salva posições para apagar no próximo ciclo
+    old_x = x_sweep;
+    old_y = y_sweep;
+
+    // Desenhar objeto detectado (se válido)
+    if (distance_cm > 0 && distance_cm < MAX_RADIUS) {
+        // Mapeamento simples: 1 cm = 1 pixel
+        int dist_px = distance_cm;
+
+        int x_obj = RADAR_CENTER_X + (int)(dist_px * cos(rad));
+        int y_obj = RADAR_CENTER_Y - (int)(dist_px * sin(rad));
+
+        // Desenha um ponto vermelho (caixa 3x3)
+        alt_up_video_dma_draw_box(pixel_dma_dev, x_obj-1, y_obj-1, x_obj+1, y_obj+1, COLOR_RED, 0);
+    }
+
+    // --- 2. Atualizar Texto (Apenas se mudou para evitar flicker) ---
+
+    if (abs(distance_cm - last_dist) > 0) {
+        if (distance_cm > 400 || distance_cm < 0) sprintf(buf, "--- cm");
+        else sprintf(buf, "%3d cm", distance_cm);
+        vga_write_text(13, 55, buf);
+        last_dist = distance_cm;
+    }
+
+    if (angle_deg != last_ang) {
+        sprintf(buf, "%3d deg", angle_deg);
+        vga_write_text(13, 57, buf);
+        last_ang = angle_deg;
+    }
+}

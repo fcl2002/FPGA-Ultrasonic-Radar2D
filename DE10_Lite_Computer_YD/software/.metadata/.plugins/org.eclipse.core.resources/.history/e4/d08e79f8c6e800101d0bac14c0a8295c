@@ -1,0 +1,186 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+// Base do Buffer de Caracteres (Texto)
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+// Base do Controlador de DMA de Vídeo
+#define PIXEL_DMA_BASE VGA_SUBSYSTEM_VGA_PIXEL_DMA_BASE
+
+// Definições da Tela
+#define SCREEN_WIDTH  320
+#define SCREEN_HEIGHT 240
+#define CENTER_X      160
+#define CENTER_Y      239
+#define MAX_RADIUS    220
+#define PI            3.14159265
+
+// Cores (RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+
+// Variável para armazenar o endereço real da memória de vídeo (SDRAM)
+unsigned int pixel_buffer_addr = 0;
+
+// ==========================================
+// FUNÇÕES DE BAIXO NÍVEL (BASEADO NO RADAR.C)
+// ==========================================
+
+// Escreve um pixel diretamente na memória (SDRAM/SRAM)
+void plot_pixel(int x, int y, short color) {
+    if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) return;
+
+    // Cálculo do offset: (y * 320 + x) * 2 bytes por pixel
+    // Usamos IOWR_16DIRECT para escrever 16 bits de cor
+    IOWR_16DIRECT(pixel_buffer_addr, (y * SCREEN_WIDTH + x) << 1, color);
+}
+
+// Algoritmo de Bresenham para desenhar linhas (Igual ao radar.c)
+void draw_line_manual(int x0, int y0, int x1, int y1, short color) {
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+    int e2;
+
+    while (1) {
+        plot_pixel(x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+// Desenha uma caixa preenchida (para o objeto)
+void draw_box_manual(int x, int y, int size, short color) {
+    int i, j;
+    for(i = x - size; i <= x + size; i++) {
+        for(j = y - size; j <= y + size; j++) {
+            plot_pixel(i, j, color);
+        }
+    }
+}
+
+// ==========================================
+// FUNÇÕES DE TEXTO
+// ==========================================
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+void vga_clear_text() {
+    int offset;
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' ');
+    }
+}
+
+// ==========================================
+// FUNÇÕES PRINCIPAIS DO RADAR
+// ==========================================
+
+void init_vga() {
+    // 1. Configurar o Controlador de DMA
+    // Precisamos pegar o endereço onde o DMA guarda os pixels
+    alt_up_video_dma_dev *dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+
+    if (dma_dev == NULL) {
+        printf("ERRO: VGA DMA nao aberto. Usando endereco padrao SDRAM.\n");
+        pixel_buffer_addr = 0x00000000; // Fallback para base da SDRAM
+    } else {
+        // Pega o endereço do buffer configurado no hardware
+        pixel_buffer_addr = alt_up_video_dma_ctrl_get_addr(dma_dev);
+        // Limpa a tela
+        alt_up_video_dma_screen_clear(dma_dev, 0);
+    }
+
+    printf("VGA Endereco do Buffer: 0x%x\n", pixel_buffer_addr);
+
+    // 2. Desenhar Interface Fixa (Bordas)
+    draw_line_manual(10, CENTER_Y, 310, CENTER_Y, COLOR_WHITE); // Linha base
+
+    // Arcos aproximados (linhas retas para simplificar visualização rápida)
+    // 100cm
+    int r = 100;
+    int prev_x = CENTER_X + r, prev_y = CENTER_Y;
+    for(int a=0; a<=180; a+=10) {
+        int nx = CENTER_X + (int)(r * cos(a * PI / 180.0));
+        int ny = CENTER_Y - (int)(r * sin(a * PI / 180.0));
+        draw_line_manual(prev_x, prev_y, nx, ny, COLOR_WHITE);
+        prev_x = nx; prev_y = ny;
+    }
+
+    // 3. Inicializar Texto
+    vga_clear_text();
+    vga_write_text(32, 2, "RADAR SYSTEM 2D");
+    vga_write_text(2, 58, "Status: ON");
+}
+
+void update_radar_view(int angle, int distance_cm) {
+    static int old_angle = 0;
+    static int last_dist = -1;
+    char buf[20];
+
+    double rad = (double)angle * PI / 180.0;
+    double old_rad = (double)old_angle * PI / 180.0;
+
+    // --- 1. APAGAR LINHA ANTERIOR (Vermelho/Preto) ---
+    // Recalcula coordenadas da linha antiga
+    int old_x = CENTER_X + (int)(MAX_RADIUS * cos(old_rad));
+    int old_y = CENTER_Y - (int)(MAX_RADIUS * sin(old_rad));
+
+    // Desenha PRETO sobre a linha antiga
+    draw_line_manual(CENTER_X, CENTER_Y, old_x, old_y, COLOR_BLACK);
+
+
+    // --- 2. DESENHAR NOVA LINHA (Verde) ---
+    int new_x = CENTER_X + (int)(MAX_RADIUS * cos(rad));
+    int new_y = CENTER_Y - (int)(MAX_RADIUS * sin(rad));
+
+    draw_line_manual(CENTER_X, CENTER_Y, new_x, new_y, COLOR_GREEN);
+
+
+    // --- 3. PLOTAR OBJETO (Ponto Vermelho) ---
+    if (distance_cm > 5 && distance_cm < MAX_RADIUS) {
+        int obj_x = CENTER_X + (int)(distance_cm * cos(rad));
+        int obj_y = CENTER_Y - (int)(distance_cm * sin(rad));
+
+        // Desenha caixa 4x4
+        draw_box_manual(obj_x, obj_y, 2, COLOR_RED);
+
+        // Atualiza texto apenas se mudou muito
+        if (abs(distance_cm - last_dist) > 2) {
+            sprintf(buf, "Dist: %d cm   ", distance_cm);
+            vga_write_text(2, 56, buf);
+            last_dist = distance_cm;
+        }
+    } else {
+        vga_write_text(2, 56, "Dist: ---      ");
+    }
+
+    // Salva o ângulo para apagar na próxima vez
+    old_angle = angle;
+}

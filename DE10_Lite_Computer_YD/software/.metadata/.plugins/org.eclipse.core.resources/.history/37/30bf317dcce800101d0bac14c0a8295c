@@ -1,0 +1,167 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES (Baseadas estritamente no radar.h original)
+// ==========================================
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+#define SCREEN_WIDTH  320
+#define SCREEN_HEIGHT 240
+
+// Coordenadas originais do radar.h
+#define CENTER_X      160   // (STANDARD_X / 2)
+#define CENTER_Y      220   // (STANDARD_Y - 20)
+#define RADAR_RADIUS  180
+#define MIN_DISTANCE  4
+#define PI            3.14159265359
+
+// Cores (RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+
+// Driver global
+alt_up_video_dma_dev *pixel_dma_dev;
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+void vga_clear_text() {
+    int offset;
+    // Limpa o buffer de caracteres inteiro
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' ');
+    }
+}
+
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+// Wrapper para desenhar pixel seguro (igual ao video_box do original, mas usando driver)
+void draw_pixel(int x, int y, int color) {
+    // Proteção de limites
+    if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) return;
+
+    // Desenha caixa 1x1 (pixel)
+    alt_up_video_dma_draw_box(pixel_dma_dev, color, x, y, x, y, 0, 1);
+}
+
+// ==========================================
+// LÓGICA DO RADAR (Portada 1:1 do radar.c)
+// ==========================================
+
+// Função auxiliar para desenhar a linha interpolada (cópia da lógica do radar.c)
+void draw_line_segment(int x_start, int y_start, int x_end, int y_end, int color) {
+    int steps = (int)sqrt(pow(x_end - x_start, 2) + pow(y_end - y_start, 2));
+    if (steps == 0) return;
+
+    for(int i = 0; i <= steps; i++) {
+        int x = x_start + (x_end - x_start) * i / steps;
+        int y = y_start + (y_end - y_start) * i / steps;
+        draw_pixel(x, y, color);
+    }
+}
+
+void init_vga() {
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+    if (pixel_dma_dev == NULL) {
+        printf("ERRO: VGA Pixel DMA nao encontrado.\n");
+        return;
+    }
+
+    // 1. Limpa tudo
+    alt_up_video_dma_screen_clear(pixel_dma_dev, 0);
+    vga_clear_text();
+
+    // 2. Desenha a borda do radar (Semicírculo) - Lógica original
+    for(int angle = 0; angle <= 180; angle++) {
+        double rad_angle = angle * PI / 180.0;
+        // ATENÇÃO: Matemática original usava SUBTRAÇÃO para X e Y
+        int x = CENTER_X - (int)(cos(rad_angle) * RADAR_RADIUS);
+        int y = CENTER_Y - (int)(sin(rad_angle) * RADAR_RADIUS);
+        draw_pixel(x, y, COLOR_WHITE);
+    }
+
+    // 3. Textos fixos
+    vga_write_text(30, 1, "RADAR ULTRASSONICO");
+    vga_write_text(2, 57, "Dist: ");
+    vga_write_text(2, 58, "Ang : ");
+}
+
+void update_radar_view(int angle, int distance) {
+    if (pixel_dma_dev == NULL) return;
+
+    static int last_angle = -1;
+    static int last_dist_display = -1;
+    char buf[30];
+
+    // ========================================================
+    // 1. LIMPAR A LINHA ANTERIOR (clear_previous_line)
+    // ========================================================
+    if (last_angle != -1) {
+        double rad_angle = last_angle * PI / 180.0;
+        int end_x = CENTER_X - (int)(cos(rad_angle) * RADAR_RADIUS);
+        int end_y = CENTER_Y - (int)(sin(rad_angle) * RADAR_RADIUS);
+
+        // Desenha preto em tudo
+        draw_line_segment(CENTER_X, CENTER_Y, end_x, end_y, COLOR_BLACK);
+    }
+
+    // Atualiza para limpar na próxima
+    last_angle = angle;
+
+    // ========================================================
+    // 2. DESENHAR LINHA ATUAL (draw_radar_line)
+    // ========================================================
+
+    // Clamping da distância (igual ao radar.c)
+    if(distance < MIN_DISTANCE) distance = MIN_DISTANCE;
+    if(distance > RADAR_RADIUS) distance = RADAR_RADIUS;
+
+    double rad_angle = angle * PI / 180.0;
+
+    // Ponto onde termina a linha verde (Objeto)
+    int obj_x = CENTER_X - (int)(cos(rad_angle) * distance);
+    int obj_y = CENTER_Y - (int)(sin(rad_angle) * distance);
+
+    // Ponto final do radar (Máximo)
+    int max_x = CENTER_X - (int)(cos(rad_angle) * RADAR_RADIUS);
+    int max_y = CENTER_Y - (int)(sin(rad_angle) * RADAR_RADIUS);
+
+    // A) Linha VERDE (Do centro até o objeto)
+    draw_line_segment(CENTER_X, CENTER_Y, obj_x, obj_y, COLOR_GREEN);
+
+    // B) Linha VERMELHA (Do objeto até o final)
+    draw_line_segment(obj_x, obj_y, max_x, max_y, COLOR_RED);
+
+    // ========================================================
+    // 3. ATUALIZAR TEXTO
+    // ========================================================
+
+    if (last_dist_display != distance) {
+        if (distance >= RADAR_RADIUS)
+            sprintf(buf, "--- cm   ");
+        else
+            sprintf(buf, "%3d cm   ", distance);
+
+        vga_write_text(8, 57, buf);
+        last_dist_display = distance;
+    }
+
+    sprintf(buf, "%3d deg  ", angle);
+    vga_write_text(8, 58, buf);
+}

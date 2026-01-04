@@ -1,0 +1,147 @@
+Info: Starting: Create block symbol file (.bsf)
+Info: qsys-generate C:\Architecture_des_systemes_embarques\TP\TP1\tp_train\FPGA-Ultrasonic-Radar2D\DE10_Lite_Computer_YD\VGA_Subsystem.qsys --block-symbol-file --output-directory=C:\Architecture_des_systemes_embarques\TP\TP1\tp_train\FPGA-Ultrasonic-Radar2D\DE10_Lite_Computer_YD\VGA_Subsystem --family="MAX 10" --part=10M50DAF484C7G
+Progress: Loading DE10_Lite_Computer_YD/VGA_Subsystem.qsys
+Progress: Reading input file
+Progress: Adding Char_Buf_Subsystem [Char_Buf_Subsystem 1.0]
+Progress: Parameterizing module Char_Buf_Subsystem
+Progress: Adding Sys_Clk [clock_source 18.1]
+Progress: Parameterizing module Sys_Clk
+Progress: Adding VGA_Alpha_Blender [altera_up_avalon_video_alpha_blender 18.0]
+Progress: Parameterizing module VGA_Alpha_Blender
+Progress: Adding VGA_Clk [clock_source 18.1]
+Progress: Parameterizing module VGA_Clk
+Progress: Adding VGA_Controller [altera_up_avalon_video_vga_controller 18.1]
+Progress: Parameterizing module VGA_Controller
+Progress: Adding VGA_Dual_Clock_FIFO [altera_up_avalon_video_dual_clock_buffer 18.0]
+Progress: Parameterizing module VGA_Dual_Clock_FIFO
+Progress: Adding VGA_Pixel_DMA [altera_up_avalon_video_dma_controller 18.0]
+Progress: Parameterizing module VGA_Pixel_DMA
+Progress: Adding VGA_Pixel_FIFO [altera_up_avalon_video_dual_clock_buffer 18.0]
+Progress: Parameterizing module VGA_Pixel_FIFO
+Progress: Adding VGA_Pixel_RGB_Resampler [altera_up_avalon_video_rgb_resampler 18.0]
+Progress: Parameterizing module VGA_Pixel_RGB_Resampler
+Progress: Adding VGA_Pixel_Scaler [altera_up_avalon_video_scaler 18.0]
+Progress: Parameterizing module VGA_Pixel_Scaler
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_RGB_Resampler: RGB Resampling: 1 (bits) x 1 (planes) -> 10 (bits) x 4 (planes)
+Info: VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_Scaler: Change in Resolution: 80 x 60 -> 640 x 480
+Warning: VGA_Subsystem.Char_Buf_Subsystem.Sys_Clk: The input clock frequency must be known or set by the parent if this is a subsystem.
+Warning: VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_RGB_Resampler: Char_Buf_RGB_Resampler.avalon_rgb_slave must be connected to an Avalon-MM master
+Warning: VGA_Subsystem.Sys_Clk: The input clock frequency must be known or set by the parent if this is a subsystem.
+Warning: VGA_Subsystem.VGA_Clk: The input clock frequency must be known or set by the parent if this is a subsystem.
+Warning: VGA_Subsystem.VGA_Controller: Unable to verify clock frequency. Make sure the VGA clock has a frequency of 25.0 MHz.
+Info: VGA_Subsystem.VGA_Controller: Video Output Stream: Format: 640 x 480 with Color: 10 (bits) x 3 (planes) converted to 4 (bits) per color plane
+Info: VGA_Subsystem.VGA_Pixel_RGB_Resampler: RGB Resampling: 16 (bits) x 1 (planes) -> 10 (bits) x 3 (planes)
+Info: VGA_Subsystem.VGA_Pixel_Scaler: Change in Resolution: 160 x 120 -> 640 x 480
+Info: VGA_Subsystem.VGA_Pixel_Scaler.avalon_scaler_source/VGA_Alpha_Blender.avalon_background_sink: The source has a channel signal of 4 bits, but the sink does not. Avalon-ST Adapter will be inserted.
+Info: qsys-generate succeeded.
+Info: Finished: Create block symbol file (.bsf)
+Info: 
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate C:\Architecture_des_systemes_embarques\TP\TP1\tp_train\FPGA-Ultrasonic-Radar2D\DE10_Lite_Computer_YD\VGA_Subsystem.qsys --synthesis=VHDL --output-directory=C:\Architecture_des_systemes_embarques\TP\TP1\tp_train\FPGA-Ultrasonic-Radar2D\DE10_Lite_Computer_YD\VGA_Subsystem\synthesis --family="MAX 10" --part=10M50DAF484C7G
+Progress: Loading DE10_Lite_Computer_YD/VGA_Subsystem.qsys
+Progress: Reading input file
+Progress: Adding Char_Buf_Subsystem [Char_Buf_Subsystem 1.0]
+Progress: Parameterizing module Char_Buf_Subsystem
+Progress: Adding Sys_Clk [clock_source 18.1]
+Progress: Parameterizing module Sys_Clk
+Progress: Adding VGA_Alpha_Blender [altera_up_avalon_video_alpha_blender 18.0]
+Progress: Parameterizing module VGA_Alpha_Blender
+Progress: Adding VGA_Clk [clock_source 18.1]
+Progress: Parameterizing module VGA_Clk
+Progress: Adding VGA_Controller [altera_up_avalon_video_vga_controller 18.1]
+Progress: Parameterizing module VGA_Controller
+Progress: Adding VGA_Dual_Clock_FIFO [altera_up_avalon_video_dual_clock_buffer 18.0]
+Progress: Parameterizing module VGA_Dual_Clock_FIFO
+Progress: Adding VGA_Pixel_DMA [altera_up_avalon_video_dma_controller 18.0]
+Progress: Parameterizing module VGA_Pixel_DMA
+Progress: Adding VGA_Pixel_FIFO [altera_up_avalon_video_dual_clock_buffer 18.0]
+Progress: Parameterizing module VGA_Pixel_FIFO
+Progress: Adding VGA_Pixel_RGB_Resampler [altera_up_avalon_video_rgb_resampler 18.0]
+Progress: Parameterizing module VGA_Pixel_RGB_Resampler
+Progress: Adding VGA_Pixel_Scaler [altera_up_avalon_video_scaler 18.0]
+Progress: Parameterizing module VGA_Pixel_Scaler
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_RGB_Resampler: RGB Resampling: 1 (bits) x 1 (planes) -> 10 (bits) x 4 (planes)
+Info: VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_Scaler: Change in Resolution: 80 x 60 -> 640 x 480
+Warning: VGA_Subsystem.Char_Buf_Subsystem.Sys_Clk: The input clock frequency must be known or set by the parent if this is a subsystem.
+Warning: VGA_Subsystem.Char_Buf_Subsystem.Char_Buf_RGB_Resampler: Char_Buf_RGB_Resampler.avalon_rgb_slave must be connected to an Avalon-MM master
+Warning: VGA_Subsystem.Sys_Clk: The input clock frequency must be known or set by the parent if this is a subsystem.
+Warning: VGA_Subsystem.VGA_Clk: The input clock frequency must be known or set by the parent if this is a subsystem.
+Warning: VGA_Subsystem.VGA_Controller: Unable to verify clock frequency. Make sure the VGA clock has a frequency of 25.0 MHz.
+Info: VGA_Subsystem.VGA_Controller: Video Output Stream: Format: 640 x 480 with Color: 10 (bits) x 3 (planes) converted to 4 (bits) per color plane
+Info: VGA_Subsystem.VGA_Pixel_RGB_Resampler: RGB Resampling: 16 (bits) x 1 (planes) -> 10 (bits) x 3 (planes)
+Info: VGA_Subsystem.VGA_Pixel_Scaler: Change in Resolution: 160 x 120 -> 640 x 480
+Info: VGA_Subsystem.VGA_Pixel_Scaler.avalon_scaler_source/VGA_Alpha_Blender.avalon_background_sink: The source has a channel signal of 4 bits, but the sink does not. Avalon-ST Adapter will be inserted.
+Info: VGA_Subsystem: Generating VGA_Subsystem "VGA_Subsystem" for QUARTUS_SYNTH
+Info: avalon_st_adapter: Inserting channel_adapter: channel_adapter_0
+Info: Interconnect is inserted between master Char_Buf_DMA.avalon_dma_master and slave Onchip_SRAM.s2 because the master has address signal 32 bit wide, but the slave is 11 bit wide.
+Info: Interconnect is inserted between master Char_Buf_DMA.avalon_dma_master and slave Onchip_SRAM.s2 because the master has waitrequest signal 1 bit wide, but the slave is 0 bit wide.
+Info: Interconnect is inserted between master Char_Buf_DMA.avalon_dma_master and slave Onchip_SRAM.s2 because the master has lock signal 1 bit wide, but the slave is 0 bit wide.
+Info: Interconnect is inserted between master Char_Buf_DMA.avalon_dma_master and slave Onchip_SRAM.s2 because the master has read signal 1 bit wide, but the slave is 0 bit wide.
+Info: Interconnect is inserted between master Char_Buf_DMA.avalon_dma_master and slave Onchip_SRAM.s2 because the master has readdata signal 8 bit wide, but the slave is 32 bit wide.
+Info: Interconnect is inserted between master Char_Buf_DMA.avalon_dma_master and slave Onchip_SRAM.s2 because the master has readdatavalid signal 1 bit wide, but the slave is 0 bit wide.
+Info: Char_Buf_Subsystem: "VGA_Subsystem" instantiated Char_Buf_Subsystem "Char_Buf_Subsystem"
+Info: VGA_Alpha_Blender: Starting Generation of the Alpha Blender
+Info: VGA_Alpha_Blender: "VGA_Subsystem" instantiated altera_up_avalon_video_alpha_blender "VGA_Alpha_Blender"
+Info: VGA_Controller: Starting Generation of VGA Controller
+Info: VGA_Controller: "VGA_Subsystem" instantiated altera_up_avalon_video_vga_controller "VGA_Controller"
+Info: VGA_Dual_Clock_FIFO: Starting Generation of the Dual Clock Buffer
+Info: VGA_Dual_Clock_FIFO: "VGA_Subsystem" instantiated altera_up_avalon_video_dual_clock_buffer "VGA_Dual_Clock_FIFO"
+Info: VGA_Pixel_DMA: Starting Generation of Video DMA Controller
+Info: VGA_Pixel_DMA: "VGA_Subsystem" instantiated altera_up_avalon_video_dma_controller "VGA_Pixel_DMA"
+Info: VGA_Pixel_FIFO: Starting Generation of the Dual Clock Buffer
+Info: VGA_Pixel_FIFO: "VGA_Subsystem" instantiated altera_up_avalon_video_dual_clock_buffer "VGA_Pixel_FIFO"
+Info: VGA_Pixel_RGB_Resampler: Starting Generation of Video RGB Resampler
+Info: VGA_Pixel_RGB_Resampler: "VGA_Subsystem" instantiated altera_up_avalon_video_rgb_resampler "VGA_Pixel_RGB_Resampler"
+Info: VGA_Pixel_Scaler: Starting Generation of Video Scaler
+Info: VGA_Pixel_Scaler: "VGA_Subsystem" instantiated altera_up_avalon_video_scaler "VGA_Pixel_Scaler"
+Info: avalon_st_adapter: "VGA_Subsystem" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: rst_controller: "VGA_Subsystem" instantiated altera_reset_controller "rst_controller"
+Info: ASCII_to_Image: Starting Generation of ASCII to Image Stream Converter
+Info: ASCII_to_Image: "Char_Buf_Subsystem" instantiated altera_up_avalon_video_ascii_to_image "ASCII_to_Image"
+Info: Char_Buf_DMA: Starting Generation of Video DMA Controller
+Info: Char_Buf_DMA: "Char_Buf_Subsystem" instantiated altera_up_avalon_video_dma_controller "Char_Buf_DMA"
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_up_video_dma_control_slave.v
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_up_video_dma_to_memory.v
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_up_video_dma_to_stream.v
+Info: Char_Buf_RGB_Resampler: Starting Generation of Video RGB Resampler
+Info: Char_Buf_RGB_Resampler: "Char_Buf_Subsystem" instantiated altera_up_avalon_video_rgb_resampler "Char_Buf_RGB_Resampler"
+Info: Char_Buf_Scaler: Starting Generation of Video Scaler
+Info: Char_Buf_Scaler: "Char_Buf_Subsystem" instantiated altera_up_avalon_video_scaler "Char_Buf_Scaler"
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_up_video_scaler_shrink.v
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_up_video_scaler_multiply_width.v
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_up_video_scaler_multiply_height.v
+Info: Onchip_SRAM: Starting RTL generation for module 'VGA_Subsystem_Char_Buf_Subsystem_Onchip_SRAM'
+Info: Onchip_SRAM:   Generation command is [exec C:/intelfpga_lite/18.1/quartus/bin64/perl/bin/perl.exe -I C:/intelfpga_lite/18.1/quartus/bin64/perl/lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/europa -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/perl_lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/common -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_onchip_memory2 -- C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_onchip_memory2/generate_rtl.pl --name=VGA_Subsystem_Char_Buf_Subsystem_Onchip_SRAM --dir=C:/Users/ferna/AppData/Local/Temp/alt0457_3588324015209784194.dir/0014_Onchip_SRAM_gen/ --quartus_dir=C:/intelfpga_lite/18.1/quartus --verilog --config=C:/Users/ferna/AppData/Local/Temp/alt0457_3588324015209784194.dir/0014_Onchip_SRAM_gen//VGA_Subsystem_Char_Buf_Subsystem_Onchip_SRAM_component_configuration.pl  --do_build_sim=0  ]
+Info: Onchip_SRAM: Done RTL generation for module 'VGA_Subsystem_Char_Buf_Subsystem_Onchip_SRAM'
+Info: Onchip_SRAM: "Char_Buf_Subsystem" instantiated altera_avalon_onchip_memory2 "Onchip_SRAM"
+Info: Set_Black_Transparent: Starting Generation of Video Change Alpha Value IP Core
+Info: Set_Black_Transparent: "Char_Buf_Subsystem" instantiated altera_up_avalon_video_change_alpha "Set_Black_Transparent"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_0: "Char_Buf_Subsystem" instantiated altera_mm_interconnect "mm_interconnect_0"
+Info: channel_adapter_0: "avalon_st_adapter" instantiated channel_adapter "channel_adapter_0"
+Info: Char_Buf_DMA_avalon_dma_master_translator: "mm_interconnect_0" instantiated altera_merlin_master_translator "Char_Buf_DMA_avalon_dma_master_translator"
+Info: Onchip_SRAM_s2_translator: "mm_interconnect_0" instantiated altera_merlin_slave_translator "Onchip_SRAM_s2_translator"
+Info: Char_Buf_DMA_avalon_dma_master_agent: "mm_interconnect_0" instantiated altera_merlin_master_agent "Char_Buf_DMA_avalon_dma_master_agent"
+Info: Onchip_SRAM_s2_agent: "mm_interconnect_0" instantiated altera_merlin_slave_agent "Onchip_SRAM_s2_agent"
+Info: Onchip_SRAM_s2_agent_rsp_fifo: "mm_interconnect_0" instantiated altera_avalon_sc_fifo "Onchip_SRAM_s2_agent_rsp_fifo"
+Info: router: "mm_interconnect_0" instantiated altera_merlin_router "router"
+Info: router_001: "mm_interconnect_0" instantiated altera_merlin_router "router_001"
+Info: cmd_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: rsp_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: Onchip_SRAM_s2_cmd_width_adapter: "mm_interconnect_0" instantiated altera_merlin_width_adapter "Onchip_SRAM_s2_cmd_width_adapter"
+Info: Reusing file C:/Architecture_des_systemes_embarques/TP/TP1/tp_train/FPGA-Ultrasonic-Radar2D/DE10_Lite_Computer_YD/VGA_Subsystem/synthesis/submodules/altera_merlin_burst_uncompressor.sv
+Info: avalon_st_adapter: "mm_interconnect_0" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: error_adapter_0: "avalon_st_adapter" instantiated error_adapter "error_adapter_0"
+Info: VGA_Subsystem: Done "VGA_Subsystem" with 32 modules, 49 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

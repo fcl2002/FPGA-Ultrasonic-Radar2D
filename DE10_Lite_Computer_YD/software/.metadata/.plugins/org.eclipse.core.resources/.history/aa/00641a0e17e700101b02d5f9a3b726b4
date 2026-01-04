@@ -1,0 +1,55 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// --- CONFIGURAÇÕES ---
+// Garanta que os nomes batem com o seu system.h
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+// Ajuste para 100MHz (0.00017) ou 50MHz (0.00034)
+#define FATOR_CONVERSAO 0.00017
+
+int main()
+{
+    alt_putstr("=== INICIANDO MODO RADAR AUTOMATICO ===\n");
+
+    int pos = 0;
+    int direcao = 1; // 1 = Indo, -1 = Voltando
+
+    while (1)
+    {
+        // 1. Mover o Servo
+        IOWR(SERVO_BASE, 0, pos);
+
+        // Delay para o servo chegar na posição (importante!)
+        // O servo é mecânico e lento. Se ler muito rápido, ele ainda estará se movendo.
+        usleep(30000); // 30ms
+
+        // 2. Ler o Sensor
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+        int raw_cycles = radar_data >> 10;
+        int dist_cm = (int)((float)raw_cycles * FATOR_CONVERSAO);
+
+        // 3. Imprimir dados (Formato para plotar gráfico depois)
+        // Imprime: POSICAO, DISTANCIA
+        printf("%d, %d\n", pos, dist_cm);
+
+        // 4. Atualizar Posição (Lógica de Varredura)
+        pos = pos + direcao;
+
+        // Se bater nas pontas, inverte a direção
+        if (pos >= 255) {
+            direcao = -1; // Começa a voltar
+            alt_putstr("--- Voltando ---\n");
+        }
+        else if (pos <= 0) {
+            direcao = 1;  // Começa a ir
+            alt_putstr("--- Indo ---\n");
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,167 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+// Definições da Tela
+#define SCREEN_WIDTH  320
+#define SCREEN_HEIGHT 240
+#define CENTER_X      160
+#define CENTER_Y      239
+#define MAX_RADIUS    220
+#define PI            3.14159265
+
+// Cores (Formato RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+#define COLOR_BLUE  0x001F
+
+// Variável global do driver de vídeo
+alt_up_video_dma_dev *pixel_dma_dev;
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+// Função simples para limpar texto
+void vga_clear_text() {
+    int offset;
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' ');
+    }
+}
+
+// Escreve texto direto na memória
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+// Calcula coordenada X baseada no ângulo e raio
+int get_x(int angle, int radius) {
+    return CENTER_X + (int)(radius * cos(angle * PI / 180.0));
+}
+
+// Calcula coordenada Y baseada no ângulo e raio
+int get_y(int angle, int radius) {
+    return CENTER_Y - (int)(radius * sin(angle * PI / 180.0));
+}
+
+// ==========================================
+// FUNÇÕES PRINCIPAIS
+// ==========================================
+
+void init_vga() {
+    // 1. Abrir dispositivo
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+
+    if (pixel_dma_dev == NULL) {
+        printf("ERRO: VGA Pixel DMA nao encontrado.\n");
+        return;
+    }
+
+    // 2. Limpar a tela (Preto)
+    alt_up_video_dma_screen_clear(pixel_dma_dev, 0);
+
+    // 3. Desenhar a Interface Estática (Arcos e Linhas)
+    // Linha horizontal base
+    alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_WHITE, 10, CENTER_Y, 310, CENTER_Y, 0);
+
+    // Arcos de distância (aproximados com pontos ou pequenas linhas seriam ideais,
+    // mas aqui desenhamos linhas retas simples para referência de escala)
+    // 50 cm
+    alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_WHITE, CENTER_X-2, get_y(90, 50), CENTER_X+2, get_y(90, 50)+1, 0, 1);
+    // 100 cm
+    alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_WHITE, CENTER_X-2, get_y(90, 100), CENTER_X+2, get_y(90, 100)+1, 0, 1);
+    // 150 cm
+    alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_WHITE, CENTER_X-2, get_y(90, 150), CENTER_X+2, get_y(90, 150)+1, 0, 1);
+
+    // 4. Inicializar Texto
+    vga_clear_text();
+    vga_write_text(30, 1, "RADAR ULTRASSONICO");
+    vga_write_text(2, 57, "Dist: ");
+    vga_write_text(2, 58, "Ang : ");
+    vga_write_text(35, 57, "50cm");
+    vga_write_text(35, 45, "100cm");
+    vga_write_text(35, 33, "150cm");
+}
+
+void update_radar_view(int angle, int distance_cm) {
+    if (pixel_dma_dev == NULL) return;
+
+    // Variáveis estáticas para controle de atualização de texto
+    static int last_dist = -1;
+    static int last_ang = -1;
+    char buf[16];
+
+    // --- 1. EFEITO DE VARREDURA (Apagar o rastro) ---
+    // Em vez de apagar a linha atual, apagamos a linha que ficou 2 graus para trás
+    // Isso cria um cone preto atrás da linha verde que limpa a tela suavemente.
+    // Você pode ajustar o "offset_clean" se deixar rastro demais.
+    int offset_clean = 3;
+
+    // Se o servo vai e volta, precisamos saber a direção ou apagar dos dois lados.
+    // Vamos apagar simples: 3 graus à frente e 3 graus atrás para garantir.
+    int clean_angle_1 = angle - offset_clean;
+    int clean_angle_2 = angle + offset_clean;
+
+    // Desenha linha PRETA (Apaga)
+    if(clean_angle_1 >= 0 && clean_angle_1 <= 180)
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_BLACK, CENTER_X, CENTER_Y, get_x(clean_angle_1, MAX_RADIUS), get_y(clean_angle_1, MAX_RADIUS), 0);
+
+    if(clean_angle_2 >= 0 && clean_angle_2 <= 180)
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_BLACK, CENTER_X, CENTER_Y, get_x(clean_angle_2, MAX_RADIUS), get_y(clean_angle_2, MAX_RADIUS), 0);
+
+
+    // --- 2. DESENHAR A LINHA DE VARREDURA (Verde) ---
+    // Desenha a linha atual do radar
+    int x_sweep = get_x(angle, MAX_RADIUS);
+    int y_sweep = get_y(angle, MAX_RADIUS);
+    alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_GREEN, CENTER_X, CENTER_Y, x_sweep, y_sweep, 0);
+
+
+    // --- 3. DESENHAR O OBJETO (Vermelho) ---
+    // Verifica se a distância é válida e está dentro do raio da tela
+    if (distance_cm > 2 && distance_cm < MAX_RADIUS) {
+        int obj_x = get_x(angle, distance_cm);
+        int obj_y = get_y(angle, distance_cm);
+
+        // Desenha uma caixa 4x4 SÓLIDA (fill=1) para ser bem visível
+        // Importante: Verifique os limites para não desenhar fora da tela (evita crash do DMA)
+        if (obj_x > 2 && obj_x < SCREEN_WIDTH-2 && obj_y > 2 && obj_y < SCREEN_HEIGHT-2) {
+            alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_RED, obj_x - 2, obj_y - 2, obj_x + 2, obj_y + 2, 0, 1);
+        }
+    }
+
+
+    // --- 4. ATUALIZAR TEXTO (Otimizado) ---
+    // Só escreve se o valor mudou para evitar piscar o texto
+    if (last_dist != distance_cm) {
+        if (distance_cm > 400 || distance_cm < 0)
+            sprintf(buf, "--- cm");
+        else
+            sprintf(buf, "%3d cm", distance_cm);
+        vga_write_text(8, 57, buf);
+        last_dist = distance_cm;
+    }
+
+    if (last_ang != angle) {
+        sprintf(buf, "%3d deg", angle);
+        vga_write_text(8, 58, buf);
+        last_ang = angle;
+    }
+}

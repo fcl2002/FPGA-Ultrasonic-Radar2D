@@ -1,0 +1,68 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// --- CONFIGURAÇÕES DO HARDWARE ---
+// Confirme se os nomes batem com seu system.h
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+// --- AJUSTE DE LIMITES (O SEGREDO PARA NÃO TRAVAR) ---
+// O total é 0 a 255.
+// Se bater na parede de um lado, AUMENTE o MIN.
+// Se bater na parede do outro, DIMINUA o MAX.
+#define POS_MIN  20   // Tente 20, 30 ou 40 se estiver batendo
+#define POS_MAX  230  // Tente 230, 220 ou 210 se estiver batendo
+#define PASSOS   2    // Velocidade (pula de 2 em 2 graus)
+
+// Ajuste da distancia (0.00017 para 100MHz ou 0.00034 para 50MHz)
+#define FATOR_CONVERSAO 0.00017
+
+int main()
+{
+    alt_putstr("=== RADAR AUTOMATICO INICIADO ===\n");
+    alt_putstr("Se bater nas pontas, ajuste POS_MIN ou POS_MAX no codigo.\n");
+
+    int pos = POS_MIN;
+    int indo = 1; // 1 = Indo (aumentando), 0 = Voltando (diminuindo)
+
+    while (1)
+    {
+        // 1. Mover o Servo
+        IOWR(SERVO_BASE, 0, pos);
+
+        // Delay NECESSÁRIO para o motor chegar na posição física
+        usleep(20000); // 20ms
+
+        // 2. Ler o Sensor (Opcional, mas faz parte do radar)
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+        int raw_cycles = radar_data >> 10;
+        int dist_cm = (int)((float)raw_cycles * FATOR_CONVERSAO);
+
+        // Filtro visual para o console (ignora erros > 400)
+        if (dist_cm > 400) dist_cm = 400;
+
+        // 3. Imprimir status
+        // Formato: "POSICAO, DISTANCIA" (util para graficos)
+        printf("%d, %d\n", pos, dist_cm);
+
+        // 4. Lógica de Varredura (Ping-Pong)
+        if (indo) {
+            pos += PASSOS; // Aumenta ângulo
+            if (pos >= POS_MAX) {
+                indo = 0; // Inverte direção
+                alt_putstr("--> Voltando...\n");
+            }
+        } else {
+            pos -= PASSOS; // Diminui ângulo
+            if (pos <= POS_MIN) {
+                indo = 1; // Inverte direção
+                alt_putstr("--> Indo...\n");
+            }
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,180 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES DE HARDWARE
+// ==========================================
+// Endereço base da memória de Vídeo (SDRAM no DE10-Lite começa em 0)
+// Se a imagem não aparecer, tente trocar por 0x08000000 (SRAM)
+#define PIXEL_BUFFER_BASE 0x00000000
+
+// Endereço base do Buffer de Caracteres
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+// Definições da Tela
+#define SCREEN_WIDTH  320
+#define SCREEN_HEIGHT 240
+#define CENTER_X      160
+#define CENTER_Y      239
+#define MAX_RADIUS    220
+#define PI            3.14159265
+
+// Cores (RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+
+// ==========================================
+// FUNÇÕES DE DESENHO (MEMÓRIA DIRETA)
+// ==========================================
+
+// Plota um pixel escrevendo diretamente no endereço de memória
+// Isso é MUITO mais rápido e evita erros de driver
+void plot_pixel(int x, int y, short color) {
+    if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) return;
+
+    // O endereço é: Base + (y * largura + x) * 2 bytes
+    unsigned int offset = (y * SCREEN_WIDTH + x) << 1;
+    IOWR_16DIRECT(PIXEL_BUFFER_BASE, offset, color);
+}
+
+// Algoritmo de Bresenham para traçar linhas (Otimizado)
+void draw_line_manual(int x0, int y0, int x1, int y1, short color) {
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx - dy;
+    int e2;
+
+    while (1) {
+        plot_pixel(x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+// Desenha um quadrado preenchido (para o objeto detectado)
+void draw_box_manual(int x, int y, int size, short color) {
+    int i, j;
+    for(i = x - size; i <= x + size; i++) {
+        for(j = y - size; j <= y + size; j++) {
+            plot_pixel(i, j, color);
+        }
+    }
+}
+
+// ==========================================
+// FUNÇÕES DE TEXTO
+// ==========================================
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x; // offset = y*128 + x
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+void vga_clear_text() {
+    int offset;
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, 0); // 0 = null/espaço
+    }
+}
+
+// ==========================================
+// FUNÇÕES PRINCIPAIS
+// ==========================================
+
+void init_vga() {
+    printf("Iniciando VGA (Modo: Acesso Direto SDRAM)...\n");
+
+    // 1. Tenta limpar o controlador de DMA (Apenas para garantir o reset)
+    // Usamos a função _open apenas para dar reset, mas desenhamos via memória
+    alt_up_video_dma_dev *dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+    if(dma_dev != NULL) {
+        alt_up_video_dma_screen_clear(dma_dev, 0);
+    }
+
+    // 2. Limpar a memória de vídeo manualmente (Pinta tudo de preto)
+    int x, y;
+    for(y = 0; y < SCREEN_HEIGHT; y++) {
+        for(x = 0; x < SCREEN_WIDTH; x++) {
+            plot_pixel(x, y, COLOR_BLACK);
+        }
+    }
+
+    // 3. Desenhar a Grade do Radar
+    // Linha inferior
+    draw_line_manual(10, CENTER_Y, 310, CENTER_Y, COLOR_WHITE);
+
+    // Arcos de distância (50, 100, 150 px)
+    // Como desenhar círculos é pesado, desenhamos pontos ou linhas curtas
+    for (int r = 50; r <= 150; r += 50) {
+        for (int ang = 10; ang < 170; ang += 5) {
+            int ax = CENTER_X + (int)(r * cos(ang * PI / 180.0));
+            int ay = CENTER_Y - (int)(r * sin(ang * PI / 180.0));
+            plot_pixel(ax, ay, COLOR_WHITE);
+        }
+    }
+
+    // 4. Texto Inicial
+    vga_clear_text();
+    vga_write_text(30, 2, "RADAR DE10-LITE");
+    vga_write_text(2, 58, "Status: VARREDURA");
+}
+
+void update_radar_view(int angle, int distance_cm) {
+    static int old_angle = 0;
+    static int last_dist_display = -1;
+    char buf[20];
+
+    // Converter para radianos
+    double rad = (double)angle * PI / 180.0;
+    double old_rad = (double)old_angle * PI / 180.0;
+
+    // --- 1. APAGAR LINHA ANTIGA (Desenha PRETO) ---
+    int old_x = CENTER_X + (int)(MAX_RADIUS * cos(old_rad));
+    int old_y = CENTER_Y - (int)(MAX_RADIUS * sin(old_rad));
+    draw_line_manual(CENTER_X, CENTER_Y, old_x, old_y, COLOR_BLACK);
+
+    // --- 2. DESENHAR NOVA LINHA (Desenha VERDE) ---
+    int new_x = CENTER_X + (int)(MAX_RADIUS * cos(rad));
+    int new_y = CENTER_Y - (int)(MAX_RADIUS * sin(rad));
+    draw_line_manual(CENTER_X, CENTER_Y, new_x, new_y, COLOR_GREEN);
+
+    // --- 3. DESENHAR OBJETO DETECTADO (VERMELHO) ---
+    if (distance_cm > 5 && distance_cm < MAX_RADIUS) {
+        int obj_x = CENTER_X + (int)(distance_cm * cos(rad));
+        int obj_y = CENTER_Y - (int)(distance_cm * sin(rad));
+
+        // Desenha um quadrado sólido 5x5 para ser bem visível
+        draw_box_manual(obj_x, obj_y, 2, COLOR_RED);
+
+        // Atualiza texto da distância
+        if (abs(distance_cm - last_dist_display) > 2) {
+            sprintf(buf, "Alvo: %d cm   ", distance_cm);
+            vga_write_text(2, 56, buf);
+            last_dist_display = distance_cm;
+        }
+    } else {
+        vga_write_text(2, 56, "Alvo: ---      ");
+    }
+
+    old_angle = angle;
+}

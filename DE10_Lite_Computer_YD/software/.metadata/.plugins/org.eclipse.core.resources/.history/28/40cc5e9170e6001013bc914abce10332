@@ -1,0 +1,62 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+#include "altera_avalon_pio_regs.h" // Necessário para ler os Switches
+
+// =================================================================
+// CONFIGURAÇÃO DOS NOMES (Verifique no system.h se der erro!)
+// =================================================================
+
+// Nome do Servo (Troque se o seu for diferente, ex: IP_SERVO_AVALON_0_BASE)
+#define SERVO_PWM_BASE IP_SERVO_AVALON_0_BASE
+
+// Nome do Sensor (Troque se diferente)
+#ifndef TELEMETRE_BASE
+#define TELEMETRE_BASE TELEMETRE_US_AVALON_0_BASE
+#endif
+
+int main()
+{
+    alt_putstr("=== RADAR 2D: Sistema Integrado ===\n");
+    alt_putstr("Mova os Switches SW[7..0] para girar o servo.\n");
+
+    while (1)
+    {
+        // --- PARTE 1: CONTROLE DO SERVO ---
+
+        // Lê os switches da placa (endereço base definido pelo sistema)
+        // SLIDER_SWITCHES_BASE é padrão do DE10-Lite Computer
+        int sw_valor = IORD_ALTERA_AVALON_PIO_DATA(SLIDER_SWITCHES_BASE);
+
+        // Pega apenas os 8 primeiros bits (0 a 255)
+        int posicao = sw_valor & 0xFF;
+
+        // Escreve a posição no Servomotor
+        IOWR(SERVO_PWM_BASE, 0, posicao);
+
+
+        // --- PARTE 2: LEITURA DO SENSOR ---
+
+        // Lê o dado do Telemetre
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+
+        // Separa os dados (Bits 10-31 = Ciclos Brutos)
+        int raw_cycles = radar_data >> 10;
+
+        // Calcula distância (ajuste 0.00017 p/ 100MHz ou 0.00034 p/ 50MHz)
+        int distancia = (int)((float)raw_cycles * 0.00017);
+
+
+        // --- PARTE 3: VISUALIZAÇÃO ---
+
+        // Imprime no console do Eclipse
+        printf("Servo: %3d | Dist: %3d cm\n", posicao, distancia);
+
+        // Delay para não travar o console
+        usleep(100000); // 100ms
+    }
+
+    return 0;
+}

@@ -1,0 +1,70 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// Endereços baseados na sua imagem do Qsys
+#define PIXEL_DMA_CTRL   0xFF203020
+#define CHAR_BUFFER_BASE 0x09000000  // Endereço do buffer de texto
+#define SDRAM_START      0x00000000
+#define SDRAM_END        0x03FFFFFF  // 64MB de SDRAM
+
+// Função para escrever caracteres diretamente no buffer de texto
+void test_text() {
+    alt_putstr("Testando Texto VGA...\n");
+    // Escreve "A" no canto superior esquerdo
+    IOWR_8DIRECT(CHAR_BUFFER_BASE, 0, 'A');
+    IOWR_8DIRECT(CHAR_BUFFER_BASE, 1, 'B');
+    IOWR_8DIRECT(CHAR_BUFFER_BASE, 2, 'C');
+
+    // Escreve no meio da tela (aproximado)
+    // O buffer de texto tem offsets diferentes, vamos tentar vários
+    for(int i = 0; i < 100; i++) {
+        IOWR_8DIRECT(CHAR_BUFFER_BASE, i*2, 'X');
+    }
+}
+
+// Função "Tiro de Canhão": Pinta a memória inteira de branco
+void brute_force_memory() {
+    alt_putstr("Iniciando ataque de memoria (Isso pode demorar um pouco)...\n");
+
+    // ATENÇÃO: Começamos em 4MB (0x00400000) para não sobrescrever
+    // o seu próprio programa que está rodando no início da SDRAM!
+    // Vamos até 32MB.
+
+    int start_addr = 0x00400000;
+    int end_addr   = 0x02000000;
+
+    // Define o DMA para ler a partir de 4MB (onde vamos pintar)
+    // Tenta configurar o Back Buffer para 0x00400000
+    IOWR_32DIRECT(PIXEL_DMA_CTRL, 4, start_addr);
+    IOWR_32DIRECT(PIXEL_DMA_CTRL, 0, 1); // Swap
+
+    // Pinta tudo de BRANCO (0xFFFF)
+    // Se o vídeo estiver lendo daqui, a tela VAI ficar branca
+    for(int addr = start_addr; addr < end_addr; addr += 2) {
+        // Usamos bypass de cache (0x80000000) para garantir que vai para a RAM
+        IOWR_16DIRECT(addr | 0x80000000, 0, 0xFFFF);
+    }
+    alt_putstr("Memoria preenchida!\n");
+}
+
+int main() {
+    alt_putstr("=== DIAGNOSTICO VGA ===\n");
+
+    // 1. Tenta mostrar texto (Letras A, B, C e X na tela)
+    test_text();
+
+    // 2. Tenta pintar a tela de branco na força bruta
+    brute_force_memory();
+
+    while(1) {
+        // Pisca um pixel no buffer de texto para sabermos que não travou
+        IOWR_8DIRECT(CHAR_BUFFER_BASE, 0, 'O');
+        usleep(500000);
+        IOWR_8DIRECT(CHAR_BUFFER_BASE, 0, '-');
+        usleep(500000);
+    }
+    return 0;
+}

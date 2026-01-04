@@ -1,0 +1,68 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity IP_Servomoteur_TB is
+end entity;
+
+architecture Behavioral of IP_Servomoteur_TB is
+
+    component IP_Servomoteur is
+        port (
+            clk      : in  std_logic;
+            rst_n    : in  std_logic;
+            position : in  std_logic_vector(7 downto 0);
+            commande : out std_logic
+        );
+    end component;
+
+    signal clk_tb      : std_logic := '0';
+    signal rst_n_tb    : std_logic := '0';
+    signal position_tb : std_logic_vector(7 downto 0) := (others => '0');
+    signal commande_tb : std_logic;
+
+    constant CLK_PERIOD : time := 20 ns; -- 50 MHz
+
+begin
+
+    UUT: IP_Servomoteur
+        port map (
+            clk      => clk_tb,
+            rst_n    => rst_n_tb,
+            position => position_tb,
+            commande => commande_tb
+        );
+
+    -- Clock Process
+    clk_process: process
+    begin
+        clk_tb <= '0';
+        wait for CLK_PERIOD/2;
+        clk_tb <= '1';
+        wait for CLK_PERIOD/2;
+    end process;
+
+    -- Stimulus Process
+    stim_proc: process
+    begin
+        -- 1. Reset
+        rst_n_tb <= '0';
+        wait for 100 ns;
+        rst_n_tb <= '1';
+
+        -- 2. Teste Posição 0 (Esperado: Pulso de 1ms)
+        position_tb <= std_logic_vector(to_unsigned(0, 8));
+        wait for 25 ms; -- Espera mais de um ciclo (20ms) para ver o pulso
+
+        -- 3. Teste Posição 128 (Esperado: Pulso de ~1.5ms - Centro)
+        position_tb <= std_logic_vector(to_unsigned(128, 8));
+        wait for 25 ms;
+
+        -- 4. Teste Posição 255 (Esperado: Pulso de 2ms - Máximo)
+        position_tb <= std_logic_vector(to_unsigned(255, 8));
+        wait for 25 ms;
+
+        wait;
+    end process;
+
+end architecture Behavioral;

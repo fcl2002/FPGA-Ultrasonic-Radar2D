@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file
+   path="simulation/submodules/Computer_System_HEX5_HEX4.vhd"
+   type="VHDL"
+   library="HEX5_HEX4" />
+ <file
+   path="simulation/submodules/Computer_System_HEX3_HEX0.vhd"
+   type="VHDL"
+   library="HEX3_HEX0" />
+ <file
+   path="simulation/submodules/Computer_System_Arduino_Reset_N.vhd"
+   type="VHDL"
+   library="Arduino_Reset_N" />
+ <file
+   path="simulation/submodules/Computer_System_Arduino_GPIO.vhd"
+   type="VHDL"
+   library="Arduino_GPIO" />
+ <file path="simulation/Computer_System.vhd" type="VHDL" />
+ <file path="simulation/computer_system_rst_controller.vhd" type="VHDL" />
+ <file path="simulation/computer_system_rst_controller_001.vhd" type="VHDL" />
+ <topLevel name="Computer_System" />
+ <deviceFamily name="max10" />
+ <modelMap
+   controllerPath="Computer_System.Onchip_SRAM"
+   modelPath="Computer_System.Onchip_SRAM" />
+ <modelMap
+   controllerPath="Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Onchip_SRAM"
+   modelPath="Computer_System.VGA_Subsystem.Char_Buf_Subsystem.Onchip_SRAM" />
+</simPackage>

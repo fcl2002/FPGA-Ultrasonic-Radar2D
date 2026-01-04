@@ -1,0 +1,152 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "system.h"
+#include "io.h"
+#include "alt_types.h"
+#include "altera_up_avalon_video_dma_controller.h"
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+#define CHAR_BUF_BASE VGA_SUBSYSTEM_CHAR_BUF_SUBSYSTEM_ONCHIP_SRAM_BASE
+
+// Definições da Tela
+#define SCREEN_WIDTH  320
+#define SCREEN_HEIGHT 240
+#define CENTER_X      160
+#define CENTER_Y      239
+#define MAX_RADIUS    220
+#define PI            3.14159265
+
+// Cores (Formato RGB 565)
+#define COLOR_BLACK 0x0000
+#define COLOR_WHITE 0xFFFF
+#define COLOR_GREEN 0x07E0
+#define COLOR_RED   0xF800
+#define COLOR_BLUE  0x001F
+
+// Variável global do driver de vídeo
+alt_up_video_dma_dev *pixel_dma_dev;
+
+// ==========================================
+// FUNÇÕES AUXILIARES
+// ==========================================
+
+void vga_clear_text() {
+    int offset;
+    for (offset = 0; offset < (80 * 60); offset++) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, ' ');
+    }
+}
+
+void vga_write_text(int x, int y, char *text_ptr) {
+    unsigned int offset = (y << 7) + x;
+    while (*text_ptr) {
+        IOWR_8DIRECT(CHAR_BUF_BASE, offset, *text_ptr);
+        text_ptr++;
+        offset++;
+    }
+}
+
+int get_x(int angle, int radius) {
+    // CORREÇÃO: Limitar coordenadas para evitar desenhar fora da memória (que causa pixels aleatórios)
+    int val = CENTER_X + (int)(radius * cos(angle * PI / 180.0));
+    if(val < 0) return 0;
+    if(val >= SCREEN_WIDTH) return SCREEN_WIDTH - 1;
+    return val;
+}
+
+int get_y(int angle, int radius) {
+    int val = CENTER_Y - (int)(radius * sin(angle * PI / 180.0));
+    if(val < 0) return 0;
+    if(val >= SCREEN_HEIGHT) return SCREEN_HEIGHT - 1;
+    return val;
+}
+
+// ==========================================
+// FUNÇÕES PRINCIPAIS
+// ==========================================
+
+void init_vga() {
+    pixel_dma_dev = alt_up_video_dma_open_dev("/dev/VGA_Subsystem_VGA_Pixel_DMA");
+
+    if (pixel_dma_dev == NULL) {
+        printf("ERRO: VGA Pixel DMA nao encontrado.\n");
+        return;
+    }
+
+    alt_up_video_dma_screen_clear(pixel_dma_dev, 0);
+
+    // Desenhar linhas de referência (Grid)
+    alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_WHITE, 10, CENTER_Y, 310, CENTER_Y, 0);
+
+    // Arcos de referência (50cm, 100cm, 150cm) - Usando pontos para simular arco
+    for(int a=10; a<170; a+=10) {
+        alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_WHITE, get_x(a, 50), get_y(a, 50), get_x(a, 50)+1, get_y(a, 50)+1, 0, 1);
+        alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_WHITE, get_x(a, 100), get_y(a, 100), get_x(a, 100)+1, get_y(a, 100)+1, 0, 1);
+    }
+
+    vga_clear_text();
+    vga_write_text(30, 1, "RADAR ULTRASSONICO");
+    vga_write_text(2, 57, "Dist: ");
+    vga_write_text(2, 58, "Ang : ");
+}
+
+void update_radar_view(int angle, int distance_cm) {
+    if (pixel_dma_dev == NULL) return;
+
+    static int last_dist = -1;
+    static int last_ang = -1;
+    // CORREÇÃO: Variável estática para lembrar ONDE desenhamos a linha verde na última vez
+    static int last_drawn_angle = -1;
+
+    char buf[16];
+
+    // --- 1. APAGAR O RASTRO ANTERIOR ---
+    // Se desenhamos uma linha antes, apagamos ELA exatamente.
+    // Isso resolve o problema do "Passo 5" vs "Limpeza 3".
+    if (last_drawn_angle != -1) {
+        int old_x = get_x(last_drawn_angle, MAX_RADIUS);
+        int old_y = get_y(last_drawn_angle, MAX_RADIUS);
+        // Desenha linha PRETA sobre a antiga linha VERDE
+        alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_BLACK, CENTER_X, CENTER_Y, old_x, old_y, 0);
+
+        // Também precisamos apagar o "Objeto Vermelho" antigo se houver
+        // Para simplificar, ao apagar a linha preta inteira, já removemos o objeto antigo que estava nela.
+    }
+
+    // --- 2. DESENHAR A NOVA LINHA DE VARREDURA (Verde) ---
+    int x_sweep = get_x(angle, MAX_RADIUS);
+    int y_sweep = get_y(angle, MAX_RADIUS);
+    alt_up_video_dma_draw_line(pixel_dma_dev, COLOR_GREEN, CENTER_X, CENTER_Y, x_sweep, y_sweep, 0);
+
+    // Salva este ângulo para ser apagado no próximo ciclo
+    last_drawn_angle = angle;
+
+    // --- 3. DESENHAR O OBJETO (Vermelho) ---
+    // Filtro básico para evitar "pontos aleatórios" (ruído 0 ou > 200)
+    if (distance_cm > 5 && distance_cm < 180) {
+        int obj_x = get_x(angle, distance_cm);
+        int obj_y = get_y(angle, distance_cm);
+
+        // Desenha caixa vermelha. Verifica limites para não crashar.
+        if (obj_x > 5 && obj_x < SCREEN_WIDTH-5 && obj_y > 5 && obj_y < SCREEN_HEIGHT-5) {
+            alt_up_video_dma_draw_box(pixel_dma_dev, COLOR_RED, obj_x - 3, obj_y - 3, obj_x + 3, obj_y + 3, 0, 1);
+        }
+    }
+
+    // --- 4. ATUALIZAR TEXTO ---
+    if (last_dist != distance_cm) {
+        if (distance_cm > 200 || distance_cm < 0) sprintf(buf, "--- cm");
+        else sprintf(buf, "%3d cm", distance_cm);
+        vga_write_text(8, 57, buf);
+        last_dist = distance_cm;
+    }
+
+    if (last_ang != angle) {
+        sprintf(buf, "%3d deg", angle);
+        vga_write_text(8, 58, buf);
+        last_ang = angle;
+    }
+}

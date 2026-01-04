@@ -1,0 +1,45 @@
+#include "sys/alt_stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+#include "io.h"
+#include "system.h"
+
+// Seus nomes (confira system.h)
+#define SERVO_BASE      IP_SERVO_AVALON_0_BASE
+#define TELEMETRE_BASE  TELEMETRE_US_AVALON_0_BASE
+
+int main()
+{
+    alt_putstr("=== TESTE MANUAL DE SERVO ===\n");
+    alt_putstr("Digite um valor entre 0 e 255 e aperte Enter.\n");
+    alt_putstr("Comece com 50 para nao travar!\n");
+
+    int pos_usuario = 0;
+    char buffer[10];
+
+    while (1)
+    {
+        printf(">> Digite a Posicao: ");
+
+        // Lê o numero digitado no terminal
+        scanf("%s", buffer);
+        pos_usuario = atoi(buffer); // Converte texto para numero
+
+        // Trava de segurança simples
+        if (pos_usuario < 0) pos_usuario = 0;
+        if (pos_usuario > 255) pos_usuario = 255;
+
+        // Manda pro Servo
+        IOWR(SERVO_BASE, 0, pos_usuario);
+
+        // Lê a distância só por curiosidade
+        usleep(50000); // Espera servo chegar
+        alt_u32 radar_data = IORD(TELEMETRE_BASE, 0);
+        int raw_cycles = radar_data >> 10;
+        int dist_cm = (int)((float)raw_cycles * 0.00017);
+
+        printf("Enviado: %d | Distancia: %d cm\n", pos_usuario, dist_cm);
+    }
+
+    return 0;
+}

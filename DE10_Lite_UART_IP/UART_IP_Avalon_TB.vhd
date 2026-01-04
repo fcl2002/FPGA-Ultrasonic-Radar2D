@@ -1,0 +1,227 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity UART_IP_Avalon_TB is
+end entity;
+
+architecture tb of UART_IP_Avalon_TB is
+
+  constant CLK_FREQ_HZ : integer := 50_000_000;  -- must match the wrapper generic if you keep default
+  constant BAUD_RATE   : integer := 115_200;
+
+  constant CLK_PERIOD  : time := 20 ns;          -- 50 MHz
+  constant BIT_TIME    : time := 1 sec / BAUD_RATE;
+
+  signal clk        : std_logic := '0';
+  signal reset_n    : std_logic := '0';
+
+  signal chipselect : std_logic := '0';
+  signal read_n     : std_logic := '1';
+  signal write_n    : std_logic := '1';
+  signal address    : std_logic_vector(1 downto 0) := (others => '0');
+  signal writedata  : std_logic_vector(31 downto 0) := (others => '0');
+  signal readdata   : std_logic_vector(31 downto 0);
+
+  signal uart_rx    : std_logic := '1';
+  signal uart_tx    : std_logic;
+
+  -- Simple helper to drive one UART byte on uart_rx (8N1, LSB first)
+  procedure drive_uart_byte(signal rx_line : out std_logic;
+                            constant b     : std_logic_vector(7 downto 0)) is
+  begin
+    rx_line <= '1';
+    wait for BIT_TIME;
+
+    rx_line <= '0';  -- start
+    wait for BIT_TIME;
+
+    for i in 0 to 7 loop
+      rx_line <= b(i);
+      wait for BIT_TIME;
+    end loop;
+
+    rx_line <= '1';  -- stop
+    wait for BIT_TIME;
+
+    rx_line <= '1';
+    wait for BIT_TIME;
+  end procedure;
+
+begin
+
+  clk <= not clk after CLK_PERIOD/2;
+
+  DUT : entity work.UART_IP_Avalon
+    generic map (
+      CLK_FREQ_HZ => CLK_FREQ_HZ,
+      BAUD_RATE   => BAUD_RATE
+    )
+    port map (
+      clk        => clk,
+      reset_n    => reset_n,
+
+      chipselect => chipselect,
+      address    => address,
+      read_n     => read_n,
+      write_n    => write_n,
+      writedata  => writedata,
+      readdata   => readdata,
+
+      uart_rx    => uart_rx,
+      uart_tx    => uart_tx
+    );
+
+  stim : process
+    variable rd : std_logic_vector(31 downto 0);
+  begin
+    -- Reset / init
+    reset_n    <= '0';
+    chipselect <= '0';
+    read_n     <= '1';
+    write_n    <= '1';
+    address    <= (others => '0');
+    writedata  <= (others => '0');
+    uart_rx    <= '1';
+
+    wait for 200 ns;
+    wait until rising_edge(clk);
+    reset_n <= '1';
+    wait for 200 ns;
+
+    -- Avalon WRITE DATA (addr=0): TX one byte 0x33 ('3')
+    address    <= "00";
+    writedata  <= x"00000033";
+    chipselect <= '1';
+    write_n    <= '0';
+    wait until rising_edge(clk);
+
+    write_n    <= '1';
+    chipselect <= '0';
+
+    -- Hold signals a bit for waveform readability
+    wait until rising_edge(clk);
+    wait until rising_edge(clk);
+    address   <= (others => '0');
+    writedata <= (others => '0');
+
+    -- Wait enough time for the UART frame to complete
+    wait for 12 * BIT_TIME;
+
+
+    -- UART RX: inject one byte 0x6B ('k') into uart_rx
+    drive_uart_byte(uart_rx, x"6B");
+    wait for 2 * BIT_TIME;
+
+
+    -- Poll STATUS (addr=1) until rx_valid=1
+    rd := (others => '0');
+    for k in 0 to 600 loop
+      address    <= "01";
+      chipselect <= '1';
+      read_n     <= '0';
+      wait until rising_edge(clk);
+      wait for 1 ns;
+      rd := readdata;
+      chipselect <= '0';
+      read_n     <= '1';
+
+      exit when rd(0) = '1'; -- rx_valid
+      wait for BIT_TIME/2;
+    end loop;
+
+    assert rd(0) = '1'
+      report "Timeout: rx_valid never asserted"
+      severity failure;
+
+
+    -- Avalon READ DATA (addr=0): must return 0x6B and auto-ACK rx_valid
+    address    <= "00";
+    chipselect <= '1';
+    read_n     <= '0';
+    wait until rising_edge(clk);
+    wait for 1 ns;
+    rd := readdata;
+    chipselect <= '0';
+    read_n     <= '1';
+
+    assert rd(7 downto 0) = x"6B"
+      report "RX_DATA mismatch (expected 0x6B)"
+      severity failure;
+
+    -- Give a little time then check STATUS became 0 (auto-ACK)
+    wait for 2 * BIT_TIME;
+
+    address    <= "01";
+    chipselect <= '1';
+    read_n     <= '0';
+    wait until rising_edge(clk);
+    wait for 1 ns;
+    rd := readdata;
+    chipselect <= '0';
+    read_n     <= '1';
+
+    assert rd(0) = '0'
+      report "rx_valid did not clear after DATA read (auto-ACK failed)"
+      severity failure;
+
+
+    -- Optional: test manual ACK path (CTRL addr=2) as well
+    -- Inject again and ACK using CTRL instead of DATA read
+    drive_uart_byte(uart_rx, x"55");
+    wait for 2 * BIT_TIME;
+
+    -- Poll STATUS until rx_valid=1 again
+    rd := (others => '0');
+    for k in 0 to 600 loop
+      address    <= "01";
+      chipselect <= '1';
+      read_n     <= '0';
+      wait until rising_edge(clk);
+      wait for 1 ns;
+      rd := readdata;
+      chipselect <= '0';
+      read_n     <= '1';
+
+      exit when rd(0) = '1';
+      wait for BIT_TIME/2;
+    end loop;
+
+    assert rd(0) = '1'
+      report "Timeout: rx_valid never asserted (2nd byte)"
+      severity failure;
+
+    -- Manual ACK via CTRL (addr=2)
+    address    <= "10";
+    writedata  <= x"00000001";
+    chipselect <= '1';
+    write_n    <= '0';
+    wait until rising_edge(clk);
+
+    write_n    <= '1';
+    chipselect <= '0';
+
+    wait for 2 * BIT_TIME;
+
+    -- Confirm rx_valid cleared
+    address    <= "01";
+    chipselect <= '1';
+    read_n     <= '0';
+    wait until rising_edge(clk);
+    wait for 1 ns;
+    rd := readdata;
+    chipselect <= '0';
+    read_n     <= '1';
+
+    assert rd(0) = '0'
+      report "rx_valid did not clear after CTRL ACK"
+      severity failure;
+
+    assert false
+      report "End of simulation"
+      severity failure;
+
+    wait;
+  end process;
+
+end architecture;

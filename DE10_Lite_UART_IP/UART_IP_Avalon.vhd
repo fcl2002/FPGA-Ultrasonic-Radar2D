@@ -1,0 +1,152 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+-- Avalon-MM wrapper for UART_IP (32-bit accesses)
+-- Register map (word addresses):
+-- addr=0 (0x0) DATA   : W -> send byte (writedata[7:0]) | R -> read rx_data[7:0] and auto-ACK
+-- addr=1 (0x4) STATUS : R -> bit0 rx_valid, bit1 tx_busy
+-- addr=2 (0x8) CTRL   : W -> bit0=1 generates rx_ack pulse (manual ACK)
+entity UART_IP_Avalon is
+  generic (
+    CLK_FREQ_HZ : positive := 50_000_000;
+    BAUD_RATE   : positive := 115_200
+  );
+  port (
+    clk        : in  std_logic;
+    reset_n    : in  std_logic;
+
+    -- Avalon-MM (active-low read_n/write_n style)
+    chipselect : in  std_logic;
+    address    : in  std_logic_vector(1 downto 0);
+    read_n     : in  std_logic;
+    readdata   : out std_logic_vector(31 downto 0);
+    write_n    : in  std_logic;
+    writedata  : in  std_logic_vector(31 downto 0);
+
+    -- UART pins
+    uart_rx    : in  std_logic;
+    uart_tx    : out std_logic
+  );
+end entity;
+
+architecture rtl of UART_IP_Avalon is
+
+  -- UART core interface
+  signal tx_start : std_logic := '0';
+  signal tx_data  : std_logic_vector(7 downto 0) := (others => '0');
+  signal tx_busy  : std_logic;
+
+  signal rx_data  : std_logic_vector(7 downto 0);
+  signal rx_valid : std_logic;
+  signal rx_ack   : std_logic := '0';
+
+  signal readdata_r : std_logic_vector(31 downto 0) := (others => '0');
+
+  -- Internal one-cycle pulses (so rx_ack has a single driver)
+  signal rx_ack_wr_pulse : std_logic := '0';
+  signal rx_ack_rd_pulse : std_logic := '0';
+
+begin
+
+  readdata <= readdata_r;
+
+  u_uart : entity work.UART_IP
+    generic map (
+      CLK_FREQ_HZ => CLK_FREQ_HZ,
+      BAUD_RATE   => BAUD_RATE
+    )
+    port map (
+      clk      => clk,
+      reset_n  => reset_n,
+      rx       => uart_rx,
+      tx       => uart_tx,
+      tx_start => tx_start,
+      tx_data  => tx_data,
+      tx_busy  => tx_busy,
+      rx_data  => rx_data,
+      rx_valid => rx_valid,
+      rx_ack   => rx_ack
+    );
+
+  -- WRITE decode: only generates pulses/tx_start, does NOT drive rx_ack directly
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      if reset_n = '0' then
+        tx_start        <= '0';
+        tx_data         <= (others => '0');
+        rx_ack_wr_pulse <= '0';
+      else
+        tx_start        <= '0';   -- 1-cycle pulse
+        rx_ack_wr_pulse <= '0';   -- 1-cycle pulse
+
+        if (chipselect = '1') and (write_n = '0') then
+          case address is
+            when "00" =>  -- DATA (TX)
+              if tx_busy = '0' then
+                tx_data  <= writedata(7 downto 0);
+                tx_start <= '1';
+              end if;
+
+            when "10" =>  -- CTRL
+              if writedata(0) = '1' then
+                rx_ack_wr_pulse <= '1';
+              end if;
+
+            when others =>
+              null;
+          end case;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  -- READ decode: updates readdata and generates auto-ACK pulse flag (not rx_ack directly)
+  process(clk)
+    variable r : std_logic_vector(31 downto 0);
+  begin
+    if rising_edge(clk) then
+      if reset_n = '0' then
+        readdata_r      <= (others => '0');
+        rx_ack_rd_pulse <= '0';
+      else
+        rx_ack_rd_pulse <= '0';  -- 1-cycle pulse
+
+        if (chipselect = '1') and (read_n = '0') then
+          r := (others => '0');
+
+          case address is
+            when "00" =>  -- DATA (RX)
+              r(7 downto 0) := rx_data;
+              readdata_r    <= r;
+
+              -- Auto-ACK on DATA read
+              rx_ack_rd_pulse <= '1';
+
+            when "01" =>  -- STATUS
+              r(0) := rx_valid;
+              r(1) := tx_busy;
+              readdata_r <= r;
+
+            when others =>
+              readdata_r <= (others => '0');
+          end case;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  -- Single driver for rx_ack (OR of the two pulse sources)
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      if reset_n = '0' then
+        rx_ack <= '0';
+      else
+        rx_ack <= rx_ack_wr_pulse or rx_ack_rd_pulse; -- 1 clock wide
+      end if;
+    end if;
+  end process;
+
+end architecture;
